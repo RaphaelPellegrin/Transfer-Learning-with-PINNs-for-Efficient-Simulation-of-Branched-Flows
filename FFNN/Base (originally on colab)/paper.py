@@ -470,8 +470,6 @@ def N_heads_run_Gaussiann_transfer(energy_TL_weight=3, random_ic=True, parametri
       ax[1].loglog(range(num_epochs),loss_log, label="Total loss")
       ax[1].set_title('Loss')
       
-      #PLOT LOGLOG
-      # ax[5].loglog(range(num_epochs),loss_log)
 
       ########## Saving to a file  #####################################
       # Saving the loss
@@ -710,14 +708,9 @@ def N_heads_run_Gaussiann_transfer(energy_TL_weight=3, random_ic=True, parametri
             MSE=MSE/(4*Nt)
             # Should probably do a dict that saves them / save them to a file for the cluster
             print("The MSE for head {} is {}".format(i, MSE))
-            # Is there a way to print it for every epoch like Blake? Yes, but more expensive. I 
-            # think Blake should also actually consider not computing it for every epoch
-            # much more efficient
-
 
             ax[2].plot(t_comparaison.cpu().detach(),trajectoires_xy.cpu().detach()[:,0]-x)
             ax[2].set_title('Difference between NN solution and numerical solution -x ')
-            # SOMETHING IS WRONG HERE
             ax[3].plot(t_comparaison.cpu().detach(),trajectoires_xy.cpu().detach()[:,1]-y)
             ax[3].set_title('Difference between NN solution and numerical solution - y ')
 
@@ -732,8 +725,6 @@ def N_heads_run_Gaussiann_transfer(energy_TL_weight=3, random_ic=True, parametri
             x_comparaison=x_comparaison.reshape((-1,1))
             y_comparaison=y_comparaison.reshape((-1,1))
 
-
-          # ALSO ADD THE ENERGY ERROR AS A PLOT
           # Theoretical energy
           print("The theoretical energy is {}".format(H0_init[i]))
           ax[4].plot(t_comparaison.cpu().detach(),H0_init[i]*np.ones(Nt), linestyle=':', c='r')
