@@ -554,7 +554,7 @@ def N_heads_run_Gaussiann_transfer(energy_TL_weight=3, random_ic=True, parametri
           px_=1+(1-torch.exp(-t))*uf[:,2].reshape((-1,1))
           py_=0+(1-torch.exp(-t))*uf[:,3].reshape((-1,1))
           if print_legend:
-            ax[0].plot(x_.cpu().detach(),y_.cpu().detach(),alpha=0.8, ls=':', label="NN solution of SDE stoc for {} head".format(m+1))
+            ax[0].plot(x_.cpu().detach(),y_.cpu().detach(),alpha=0.8, ls=':', label="NN solution for {} head".format(m+1))
             t_p=np.linspace(-1,1,200)
             ax[1].plot(range(num_epochs),loss_, alpha=0.8, label='{} component of the loss'.format(m+1))
           else:
@@ -563,7 +563,7 @@ def N_heads_run_Gaussiann_transfer(energy_TL_weight=3, random_ic=True, parametri
             ax[1].plot(range(num_epochs),loss_, alpha=0.8)
         elif not parametrisation:
           if print_legend:
-            ax[0].plot(uf.cpu().detach()[:,0],uf.cpu().detach()[:,1],alpha=0.8, ls=':', label="NN solution of SDE stoc for {} head".format(m+1))
+            ax[0].plot(uf.cpu().detach()[:,0],uf.cpu().detach()[:,1],alpha=0.8, ls=':', label="NN solution for {} head".format(m+1))
             t_p=np.linspace(-1,1,200)
             ax[1].plot(range(num_epochs),loss_, alpha=0.8, label='{} component of the loss'.format(m+1))
           else:
