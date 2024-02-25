@@ -25,6 +25,9 @@ import torch.optim as optim
 from scipy.integrate import odeint
 from tqdm import trange
 
+from ../Base/AD import diff
+from ../Base/neural_network_architecture import Neuralnetwork
+
 # Tell it to use GPU
 
 if torch.cuda.is_available():
@@ -36,119 +39,9 @@ else:
     torch.set_default_tensor_type(torch.DoubleTensor)
     print("No GPU found, using cpu")
 
-# Code to take the derivative with respect to the input.
-def diff(u, t, order=1):
-    # code adapted from neurodiffeq library
-    # https://github.com/NeuroDiffGym/neurodiffeq/blob/master/neurodiffeq/neurodiffeq.py
-    """The derivative of a variable with respect to another."""
-    # ones = torch.ones_like(u)
-
-    der = torch.cat(
-        [
-            torch.autograd.grad(u[:, i].sum(), t, create_graph=True)[0]
-            for i in range(u.shape[1])
-        ],
-        1,
-    )
-    if der is None:
-        print("derivative is None")
-        return torch.zeros_like(t, requires_grad=True)
-    else:
-        der.requires_grad_()
-    for i in range(1, order):
-
-        der = torch.cat(
-            [
-                torch.autograd.grad(der[:, i].sum(), t, create_graph=True)[0]
-                for i in range(der.shape[1])
-            ],
-            1,
-        )
-        # print()
-        if der is None:
-            print("derivative is None")
-            return torch.zeros_like(t, requires_grad=True)
-        else:
-            der.requires_grad_()
-    return der
 
 
-"""## Defining the NN
-"""
 
-
-class MyNetwork_Ray_Tracing(nn.Module):
-    """
-    function to learn the hidden states derivatives hdot
-    """
-
-    def __init__(
-        self, number_dims=40, number_dims_heads=10, depth_body=4, N=1, Number_heads_TL=1
-    ):
-        """number_dims is the number of nodes within each layer
-        Actually depth_body is 1 minus the number of hidden layers
-        N is the number of heads
-        """
-        super(MyNetwork_Ray_Tracing, self).__init__()
-        self.N = N
-        self.Number_heads_TL = Number_heads_TL
-        self.depth_body = depth_body
-        self.number_dims = number_dims
-        # Tanh activation function
-        self.nl = nn.Tanh()
-        self.lin1 = nn.Linear(1, number_dims)
-        self.lin2 = nn.ModuleList([nn.Linear(number_dims, number_dims)])
-        self.lin2.extend(
-            [nn.Linear(number_dims, number_dims) for i in range(depth_body - 1)]
-        )
-        self.lina = nn.ModuleList([nn.Linear(number_dims, number_dims_heads)])
-        self.lina.extend(
-            [nn.Linear(number_dims, number_dims_heads) for i in range(N - 1)]
-        )
-        # 4 outputs for x,y, p_x, p_y
-        self.lout1 = nn.ModuleList([nn.Linear(number_dims_heads, 4, bias=True)])
-        self.lout1.extend(
-            [nn.Linear(number_dims_heads, 4, bias=True) for i in range(N - 1)]
-        )
-
-        ### FOR TL
-        self.lina_TL = nn.ModuleList([nn.Linear(number_dims, number_dims_heads)])
-        self.lina_TL.extend(
-            [
-                nn.Linear(number_dims, number_dims_heads)
-                for i in range(Number_heads_TL - 1)
-            ]
-        )
-        # 4 outputs for x,y, p_x, p_y
-        self.lout1_TL = nn.ModuleList([nn.Linear(number_dims_heads, 4, bias=True)])
-        self.lout1_TL.extend(
-            [
-                nn.Linear(number_dims_heads, 4, bias=True)
-                for i in range(Number_heads_TL - 1)
-            ]
-        )
-
-    def base(self, t):
-        x = self.lin1(t)
-        x = self.nl(x)
-        for m in range(self.depth_body):
-            x = self.lin2[m](x)
-            x = self.nl(x)
-        return x
-
-    def forward_initial(self, x):
-        d = {}
-        for n in range(self.N):
-            xa = self.lina[n](x)
-            d[n] = self.lout1[n](xa)
-        return d
-
-    def forward_TL(self, x):
-        d = {}
-        for n in range(self.Number_heads_TL):
-            xa = self.lina_TL[n](x)
-            d[n] = self.lout1_TL[n](xa)
-        return d
 
 
 """## Numerical - copied to be the same as in Ray_TracingwithSavingandRandomSamplingansEnergy_forFeb15"""
@@ -218,23 +111,7 @@ def rayTracing_general(t, x0, y0, px0, py0, means_Gaussians, lam=1, sig=0.1, A_=
 """## Experiments
 
 ### Sums of Gaussians
-
-Now general case of n Gaussians, with the possibility of energy conservation.
 """
-
-means_cell = [
-    [0.74507886, 0.3602802],
-    [0.40147605, 0.06139579],
-    [0.94162198, 0.46722697],
-    [0.79110703, 0.8973808],
-    [0.64732527, 0.07095655],
-    [0.10083943, 0.31935057],
-    [0.24929806, 0.60499613],
-    [0.11377013, 0.42598647],
-    [0.85163671, 0.26495608],
-    [0.18439795, 0.31438099],
-]
-
 
 def TL_N_heads_run_Gaussiann_transfer(
     network_in,
@@ -310,7 +187,7 @@ def TL_N_heads_run_Gaussiann_transfer(
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         network50 = copy.deepcopy(network2)
         """
-      network50=MyNetwork_Ray_Tracing(number_dims=width_, number_dims_heads=width_heads, N=number_of_heads,  Number_heads_TL=number_of_heads_TL)
+      network50=NeuralNetwork(number_dims=width_, number_dims_heads=width_heads, N=number_of_heads,  Number_heads_TL=number_of_heads_TL)
       if not use_SGD_TL:
         optimizer50=optim.Adam(network50.parameters(), lr=1e-3)
       if use_SGD_TL:
@@ -1134,7 +1011,7 @@ def TL_N_heads_run_Gaussiann_transfer(
 
 for i in range(1):
     filename_saved = "../OInitial_x_0final_t_1alpha_1width_40epochs_25000grid_size_400Network_state.pth"
-    network_base = MyNetwork_Ray_Tracing(
+    network_base = NeuralNetwork(
         number_dims=40, number_dims_heads=10, N=11, Number_heads_TL=1
     )
     network_base.load_state_dict(
