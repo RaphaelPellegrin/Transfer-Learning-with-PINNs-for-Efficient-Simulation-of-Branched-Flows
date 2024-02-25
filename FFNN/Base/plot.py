@@ -15,8 +15,13 @@ from numerical_integrators import numerical_integrator
 from reparametrize import reparametrize
 from params import means_cell
 
+lineW: int = 3
+lineBoxW: int = 2
+font: dict = {"size": 24}
+plt.rc("font", **font)
+
 def potential_grid(
-    initial_x : float, final_t : float, alpha_ : float, means_cell : list =means_cell, sigma : float = 0.1
+    initial_x : float, final_t : float, alpha_ : float, means_cell : list =means_cell, sigma : float = 0.1,
 ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
     """Makes a grid with the potential value
 
@@ -83,8 +88,9 @@ def plot_all(
     x1,
     y1,
     V,
-    sig : float,
+    sigma : float,
     H0_init,
+    times_t,
     print_legend: bool = True,
 ) -> None:
     # Create a figure
@@ -142,7 +148,7 @@ def plot_all(
         # Now we print the loss and the trajectory
         # We need to detach the tensors when working on GPU
         if parametrisation:
-            x_, y_, px_, py_ = reparametrize(initial_x=initial_x, initial_y=initial_y, t, head=uf)
+            x_, y_, px_, py_ = reparametrize(initial_x=initial_x, initial_y=initial_y, t= times_t, head=uf)
             if print_legend:
                 ax[0].plot(
                     x_.cpu().detach(),
@@ -208,7 +214,7 @@ def plot_all(
         print("The initial condition used is", initial_conditions_dictionary[i])
         initial_y = initial_conditions_dictionary[i]
         x, y, px, py = numerical_integrator(
-            t, x0, initial_conditions_dictionary[i], px0, py0, means_cell, sig=sig, alpha_=alpha_
+            t, x0, initial_conditions_dictionary[i], px0, py0, means_cell, sigma=sigma, alpha_=alpha_
         )
         if x[-1] > maximum_x:
             maximum_x = x[-1]
@@ -349,7 +355,7 @@ def plot_all(
 
             # Updating the energy
             H_curr_comparaison += -alpha_ * torch.exp(
-                -(1 / (2 * sig**2))
+                -(1 / (2 * sigma**2))
                 * ((x_comparaison - mu_x) ** 2 + (y_comparaison - mu_y) ** 2)
             )
         ax[4].plot(t_comparaison.cpu().detach(), H_curr_comparaison.cpu().detach())
@@ -379,4 +385,4 @@ def plot_all(
     ax[4].set_xlabel("$t$")
     ax[4].set_ylabel("Energy")
 
-    plt.show()
+    plt.savefig('Data/Fig.png')

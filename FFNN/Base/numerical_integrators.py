@@ -35,20 +35,18 @@ def ray_tracing_system(
     Vx = 0
     Vy = 0
 
-    A = A_
-
     for i in means_gaussian:
         muX1 = i[0]
         muY1 = i[1]
-        V += -A * np.exp(-(((x - muX1) ** 2 + (y - muY1) ** 2) / sigma**2) / 2)
+        V += -alpha_ * np.exp(-(((x - muX1) ** 2 + (y - muY1) ** 2) / sigma**2) / 2)
         Vx += (
-            A
+            alpha_
             * np.exp(-(((x - muX1) ** 2 + (y - muY1) ** 2) / sigma**2) / 2)
             * (x - muX1)
             / sigma**2
         )
         Vy += (
-            A
+            alpha_
             * np.exp(-(((x - muX1) ** 2 + (y - muY1) ** 2) / sigma**2) / 2)
             * (y - muY1)
             / sigma**2
@@ -62,7 +60,7 @@ def ray_tracing_system(
 
 # Scipy Solver
 def numerical_integrator(
-    t, x0, y0, px0, py0, means_gaussian, lam=1, sigma: float = 0.1, A_: float = 0.1
+    t, x0, y0, px0, py0, means_gaussian, lam=1, sigma: float = 0.1, alpha_: float = 0.1
 ):
     u0 = [x0, y0, px0, py0]
     # Call the ODE solver
@@ -74,7 +72,7 @@ def numerical_integrator(
             means_gaussian,
             lam,
             sigma,
-            A_,
+            alpha_,
         ),
     )
     xP = solPend[:, 0]

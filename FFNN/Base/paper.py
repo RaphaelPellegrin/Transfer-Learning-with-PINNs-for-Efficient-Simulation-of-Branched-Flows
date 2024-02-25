@@ -41,13 +41,9 @@ else:
 lineW: int = 3
 lineBoxW: int = 2
 font: dict = {"size": 24}
-
 plt.rc("font", **font)
 
 
-font = {"size": 24}
-
-plt.rc("font", **font)
 
 
 
@@ -376,7 +372,7 @@ def initial_full_network_training(
     pickle.dump(initial_conditions_dictionary, f)
     f.close()
 
-    return network2, d2, loss_record, losses_each_head, initial_conditions_dictionary, H0_init
+    return network2, d2, t, loss_record, losses_each_head, initial_conditions_dictionary, H0_init
 
 
 
@@ -400,15 +396,15 @@ def initial_full_network_training(
 # @click.option("ft", "final_time", default=1, help="Final time")
 # @click.option("wba", "width_base", default=40, help="Width of the base")
 def main(
-    number_of_epochs : int = 25 , number_of_heads : int = 11, final_time : float = 1 , width_base : int = 40,
+    number_of_epochs : int = 500 , number_of_heads : int = 11, final_time : float = 1 , width_base : int = 40,
 ):
     initial_x = 0
-    alpha_ = 1
+    alpha_ = 0.1
     grid_size = 400
     sigma = 0.1
     parametrisation = True
 
-    network_base, d2, loss_record, losses_each_head, initial_conditions_dictionary, H0_init= initial_full_network_training(
+    network_base, d2, t, loss_record, losses_each_head, initial_conditions_dictionary, H0_init= initial_full_network_training(
         random_ic=False,
         parametrisation= parametrisation,
         energy_conservation=False,
@@ -453,8 +449,9 @@ def main(
          x1=x1,
          y1=y1,
          V=V,
-         sig=sigma,
+         sigma=sigma,
          H0_init=H0_init,
+         times_t =t,
          print_legend= True,
          )
 
