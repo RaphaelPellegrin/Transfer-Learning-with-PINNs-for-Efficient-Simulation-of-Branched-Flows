@@ -61,7 +61,6 @@ class NeuralNetwork(nn.Module):
             ]
         )
 
-
     def base(self, t):
         x = self.lin1(t)
         x = self.nl(x)
@@ -71,16 +70,16 @@ class NeuralNetwork(nn.Module):
         return x
 
     # Forward for initial training pass
-    def forward_initial(self, x):
-        d = {}
+    def forward_initial(self, x) -> dict:
+        d: dict = {}
         for n in range(self.number_heads):
             xa = self.lina[n](x)
             d[n] = self.lout1[n](xa)
         return d
 
     # forward for Transfer Learning
-    def forward_TL(self, x):
-        d = {}
+    def forward_TL(self, x) -> dict:
+        d: dict = {}
         for n in range(self.number_heads_tl):
             xa = self.lina_TL[n](x)
             d[n] = self.lout1_TL[n](xa)
