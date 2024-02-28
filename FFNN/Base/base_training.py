@@ -13,7 +13,6 @@ Original file is located at
 
 # Imports
 import copy
-import math
 import pickle
 import random
 import time
@@ -29,7 +28,7 @@ from AD import diff
 from energy import get_current_energy
 from neural_network_architecture import NeuralNetwork
 from params import means_cell
-from plot import plot_all, potential_grid
+from plot import plot_all
 from reparametrize import reparametrize, unpack
 
 # test
@@ -59,6 +58,8 @@ def initial_full_network_training(
     alpha_: float = 0.1,
     sigma: float = 0.1,
     initial_x: float = 0,
+    initial_px = 1,
+    initial_py = 0,
     final_t: float = 1,
     means_cell: list = means_cell,
     width_base: int = 40,
@@ -67,7 +68,6 @@ def initial_full_network_training(
     grid_size: int = 400,
     number_of_heads: int = 11,
     number_of_heads_TL: int = 1,
-    path_saving_model: str = "Data/model",
     load_weights: bool = False,
     energy_conservation: bool = False,
     norm_clipping: bool = False,
@@ -217,8 +217,7 @@ def initial_full_network_training(
                 # Outputs
                 if parametrisation:
                     x, y, px, py = reparametrize(
-                        initial_x=initial_x, initial_y=initial_y, t=t, head=head
-                    )
+                        initial_x=initial_x, initial_y=initial_y, t=t, head=head, initial_px=initial_px, initial_py=initial_py)
                 elif not parametrisation:
                     x, y, px, py = unpack(head)
                 # Derivatives
@@ -251,6 +250,7 @@ def initial_full_network_training(
                     partial_y,
                     alpha_,
                     sigma,
+                    means_cell
                 )
 
                 ## We can finally set the energy for head l
@@ -273,8 +273,8 @@ def initial_full_network_training(
                     L5 = (x[0, 0] - initial_x) ** 2
                     L6 = (y[0, 0] - initial_y) ** 2
                     ## Velocity
-                    L7 = (px[0, 0] - 1) ** 2
-                    L8 = (py[0, 0] - 0) ** 2
+                    L7 = (px[0, 0] - initial_px) ** 2
+                    L8 = (py[0, 0] - initial_py) ** 2
 
                 # Could add the penalty that H is constant L9
                 L9 = ((H_0 - H_curr) ** 2).mean()
@@ -328,20 +328,6 @@ def initial_full_network_training(
     print("The maximum of the individual losses was {}".format(maxi_indi))
     total_epochs += number_of_epochs
 
-    ### Save network2 here (to train again in the next cell) ######################
-    torch.save(
-        {
-            "model_state_dict": network2.state_dict(),
-            "loss": temporary_loss,
-            "epoch": epoch_mini,
-            "optimizer_state_dict": optimizer.state_dict(),
-            "total_epochs": total_epochs,
-            "initial_condition": initial_conditions_dictionary,
-        },
-        path_saving_model,
-    )
-    ###############################################################################
-
     # Forward pass (network2 is the best network now)
     x_base2 = network2.base(t)
     d2 = network2.forward_initial(x_base2)
@@ -354,14 +340,13 @@ def initial_full_network_training(
         )
     )
 
-    # Saving the initial conditions
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_grid_size_{str(grid_size)}_Initial_conditions.p"
-    f = open(filename, "wb")
-    pickle.dump(initial_conditions_dictionary, f)
-    f.close()
-
     return (
         network2,
+        temporary_loss,
+        epoch_mini,
+        optimizer.state_dict(),
+        total_epochs,
+        initial_conditions_dictionary,
         d2,
         t,
         loss_record,
@@ -391,12 +376,14 @@ def initial_full_network_training(
 # @click.option("ft", "final_time", default=1, help="Final time")
 # @click.option("wba", "width_base", default=40, help="Width of the base")
 def main(
-    number_of_epochs: int = 50000,
+    number_of_epochs: int = 10000,
     number_of_heads: int = 11,
     final_time: float = 1,
     width_base: int = 40,
 ):
     initial_x = 0
+    initial_px=1
+    initial_py=0
     alpha_ = 0.1
     grid_size = 400
     sigma = 0.1
@@ -404,6 +391,11 @@ def main(
 
     (
         network_base,
+        temporary_loss,
+        epoch_mini,
+        optimizer_state_dict,
+        total_epochs,
+        initial_conditions_dictionary,
         d2,
         t,
         loss_record,
@@ -413,7 +405,7 @@ def main(
     ) = initial_full_network_training(
         random_ic=False,
         parametrisation=parametrisation,
-        energy_conservation=False,
+        energy_conservation=True,
         number_of_epochs=number_of_epochs,
         grid_size=grid_size,
         number_of_heads=number_of_heads,
@@ -421,6 +413,25 @@ def main(
         alpha_=alpha_,
         sigma=sigma,
     )
+
+    ### Save network2 here (to train again in the next cell) ######################
+    torch.save(
+        {
+            "model_state_dict": network_base.state_dict(),
+            "loss": temporary_loss,
+            "epoch": epoch_mini,
+            "optimizer_state_dict": optimizer_state_dict,
+            "total_epochs": total_epochs,
+            "initial_condition": initial_conditions_dictionary,
+        },
+    "Data/model",
+    )
+
+    # Saving the initial conditions
+    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_time)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_grid_size_{str(grid_size)}_Initial_conditions.p"
+    f = open(filename, "wb")
+    pickle.dump(initial_conditions_dictionary, f)
+    f.close()
 
     # Saving the network
     filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_time)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_network_state.pth"
@@ -434,6 +445,12 @@ def main(
     f = open(filename, "wb")
     pickle.dump(loss_record, f)
     f.close()
+
+    # here need to be able to get network_base, 
+    # d2 *can get with network_base and t)
+    # t
+    # initial_condition_dictionary
+    # and H0_init to be able to reload fast.
 
     plot_all(
         number_of_epochs=number_of_epochs,

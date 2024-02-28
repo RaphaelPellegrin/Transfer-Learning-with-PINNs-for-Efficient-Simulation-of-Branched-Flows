@@ -263,7 +263,7 @@ def perform_transfer_learning(
                 # Outputs
                 if parametrisation:
                     x_TL, y_TL, px_TL, py_TL = reparametrize(
-                        initial_x, initial_y_TL, t, head_TL
+                        initial_x=initial_x, initial_y=initial_y_TL, t=t, head=head_TL, initial_px=1, initial_py=0
                     )
                 elif not parametrisation:
                     x_TL, y_TL, px_TL, py_TL = unpack(head_TL)
@@ -296,6 +296,7 @@ def perform_transfer_learning(
                     partial_y_TL,
                     alpha_=alpha_,
                     sigma=sigma,
+                    means_cell=means_cell
                 )
 
                 ## We can finally set the energy for head l
@@ -457,11 +458,13 @@ def main(number_of_epochs: int = 5,
     final_time: float = 1,
     width_base: int = 40) -> None:
     initial_x = 0
+    initial_px=1
+    initial_py=0
     alpha_ = 0.1
     grid_size = 400
     sigma = 0.1
     parametrisation = True
-    num_epochs_TL=25
+    num_epochs_TL=10000
     number_of_epochs=5
 
 
@@ -472,6 +475,13 @@ def main(number_of_epochs: int = 5,
     network_base.load_state_dict(
         torch.load(filename_saved, map_location=torch.device("cpu"))
     )
+
+
+    # Need to code up the reattach closest head
+    # The idea there is that for a new IC or a new potential
+    # we start with a new head that is not random:
+    # we use the head corresponding to the closest
+    # ic or potential that has been trained with the base
 
     (
         network2_TL,

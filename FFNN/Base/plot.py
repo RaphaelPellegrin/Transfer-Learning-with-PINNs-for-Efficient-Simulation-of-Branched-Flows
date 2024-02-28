@@ -100,17 +100,19 @@ def plot_all(
     # Create a figure
     f, ax = plt.subplots(5, 1, figsize=(20, 80))
 
+    times_t, _ = torch.sort(times_t)
+
     # Plot the loss as a fct of the number of epochs
     ax[1].loglog(range(number_of_epochs), loss_record, label=f"Total loss {tl}")
     ax[1].set_title(f"Loss {tl}")
 
     # Now plot the individual trajectories and the individual losses
-    for m in range(number_of_heads):
-        # Get head m
-        uf = d2[m]
-        initial_y = initial_conditions_dictionary[m]
+    for i in range(number_of_heads):
+        # Get head i
+        head = d2[i]
+        initial_y = initial_conditions_dictionary[i]
         # The loss
-        loss_ = losses_each_head[m]
+        loss_head = losses_each_head[i]
 
         #################################################################
 
@@ -118,7 +120,7 @@ def plot_all(
         # We need to detach the tensors when working on GPU
         if parametrisation:
             x_, y_, px_, py_ = reparametrize(
-                initial_x=initial_x, initial_y=initial_y, t=times_t, head=uf
+                initial_x=initial_x, initial_y=initial_y, t=times_t, head=head
             )
             if print_legend:
                 ax[0].plot(
@@ -126,40 +128,40 @@ def plot_all(
                     y_.cpu().detach(),
                     alpha=0.8,
                     ls=":",
-                    label=f"NN solution {tl} for {str(m + 1)} head",
+                    label=f"NN solution {tl} for {str(i + 1)} head",
                 )
                 ax[1].plot(
                     range(number_of_epochs),
-                    loss_,
+                    loss_head,
                     alpha=0.8,
-                    label=f"{str(m + 1)} component of the loss {tl}",
+                    label=f"{str(i + 1)} component of the loss {tl}",
                 )
             else:
                 ax[0].plot(x_.cpu().detach(), y_.cpu().detach(), alpha=0.8, ls=":")
-                ax[1].plot(range(number_of_epochs), loss_, alpha=0.8)
+                ax[1].plot(range(number_of_epochs), loss_head, alpha=0.8)
         elif not parametrisation:
             if print_legend:
                 ax[0].plot(
-                    uf.cpu().detach()[:, 0],
-                    uf.cpu().detach()[:, 1],
+                    head.cpu().detach()[:, 0],
+                    head.cpu().detach()[:, 1],
                     alpha=0.8,
                     ls=":",
-                    label=f"NN solution for {str(m + 1)} head {tl}",
+                    label=f"NN solution for {str(i + 1)} head {tl}",
                 )
                 ax[1].plot(
                     range(number_of_epochs),
-                    loss_,
+                    loss_head,
                     alpha=0.8,
-                    label=f"{str(m + 1)} component of the loss {tl}",
+                    label=f"{str(i + 1)} component of the loss {tl}",
                 )
             else:
                 ax[0].plot(
-                    uf.cpu().detach()[:, 0],
-                    uf.cpu().detach()[:, 1],
+                    head.cpu().detach()[:, 0],
+                    head.cpu().detach()[:, 1],
                     alpha=0.8,
                     ls=":",
                 )
-                ax[1].plot(range(number_of_epochs), loss_, alpha=0.8)
+                ax[1].plot(range(number_of_epochs), loss_head, alpha=0.8)
 
     # define the time
     Nt = 500
@@ -170,7 +172,7 @@ def plot_all(
     # Set our tensor of times
     t_comparaison = torch.linspace(0, final_t, Nt, requires_grad=True).reshape(-1, 1)
     x_base_comparaison = network_trained.base(t_comparaison)
-    d_comparaison = network_trained.forward_initial(x_base_comparaison)
+    heads_comparaison = network_trained.forward_initial(x_base_comparaison)
 
     # Initial positon and velocity
     x0, px0, py0 = 0, 1, 0.0
@@ -201,16 +203,17 @@ def plot_all(
 
         # Comparaison
         # Get head m
-        trajectoires_xy = d_comparaison[i]
+        trajectoires_xy = heads_comparaison[i]
 
         if parametrisation:
-            x_, y_, px_, py_ = reparametrize(initial_x, 1, t_comparaison, trajectoires_xy, 1, 0)
+            x_comparaison, y_comparaison, px_comparaison, py_comparaison = reparametrize(initial_x, initial_y=initial_y, t=t_comparaison, head=trajectoires_xy, initial_px=1, initial_py=0)
             # MSE
-            mse = compute_mse(x_, y_, px_, py_, x, y, px, py, Nt)
+            mse = compute_mse(x_comparaison, y_comparaison, px_comparaison, py_comparaison, x, y, px, py, Nt)
             # Should probably do a dict that saves them / save them to a file for the cluster
             print("The mse for head {} is {}".format(i, mse))
-            diff_x = x_.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))
-            diff_y = y_.cpu().detach().reshape((-1, 1)) - y.reshape((-1, 1))
+
+            diff_x = x_comparaison.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))
+            diff_y = y_comparaison.cpu().detach().reshape((-1, 1)) - y.reshape((-1, 1))
             ax[2].plot(
                 t_comparaison.cpu().detach().reshape((-1, 1)),
                 diff_x.reshape((-1, 1)),
@@ -224,11 +227,6 @@ def plot_all(
             ax[3].set_title(
                 "Difference between NN solution and numerical solution - y "
             )
-
-            px_comparaison = px_
-            py_comparaison = py_
-            x_comparaison = x_
-            y_comparaison = y_
 
         elif not parametrisation:
             mse = compute_mse_(trajectoires_xy, x,y,px,py, Nt)
@@ -341,15 +339,15 @@ def plot_all_TL(
     for m in range(number_of_heads):
         initial_y = initial_conditions_dictionary[m]
         # Get head m
-        uf = d2[m]
+        head = d2[m]
         # The loss
-        loss_ = losses_each_head[m]
+        loss_head = losses_each_head[m]
 
-        save_files(loss_, uf, m, initial_x, final_t, alpha_, width_base, number_of_epochs, grid_size)
+        save_files(loss_head, head, m, initial_x, final_t, alpha_, width_base, number_of_epochs, grid_size)
         #################################################################
 
         if parametrisation:
-            x_, y_, px_, py_ = reparametrize(initial_x, initial_y, times_t, uf)
+            x_, y_, px_, py_ = reparametrize(initial_x, initial_y, times_t, head)
             if print_legend:
                 ax[1].plot(
                     x_.cpu().detach(),
@@ -360,32 +358,32 @@ def plot_all_TL(
                 )
                 ax[0].loglog(
                     range(number_of_epochs),
-                    loss_,
+                    loss_head,
                     alpha=0.8,
                     label="{} component of the loss".format(m + 1),
                 )
             else:
                 ax[1].plot(x_.cpu().detach(), y_.cpu().detach(), alpha=0.8, ls=":")
-                ax[0].loglog(range(number_of_epochs), loss_, alpha=0.8)
+                ax[0].loglog(range(number_of_epochs), loss_head, alpha=0.8)
 
         elif not parametrisation:
             # Now we print the loss and the trajectory
             # We need to detach the tensors when working on GPU
             if print_legend:
                 ax[1].plot(
-                    uf.cpu().detach()[:, 0],
-                    uf.cpu().detach()[:, 1],
+                    head.cpu().detach()[:, 0],
+                    head.cpu().detach()[:, 1],
                     label="NN solution (after TL) for {} head".format(m + 1),
                 )
                 ax[0].loglog(
                     range(number_of_epochs),
-                    loss_,
+                    loss_head,
                     alpha=0.8,
                     label="{} component of the loss".format(m + 1),
                 )
             else:
-                ax[1].plot(uf.cpu().detach()[:, 0], uf.cpu().detach()[:, 1])
-                ax[0].loglog(range(number_of_epochs), loss_, alpha=0.8)
+                ax[1].plot(head.cpu().detach()[:, 0], head.cpu().detach()[:, 1])
+                ax[0].loglog(range(number_of_epochs), loss_head, alpha=0.8)
 
     # define the time
     Nt = 500
@@ -398,7 +396,7 @@ def plot_all_TL(
     # Set our tensor of times
     # t_comparaison=torch.linspace(0,final_t,Nt,requires_grad=True).reshape(-1,1)
     x_base_comparaison_TL = network_trained.base(t_comparaison)
-    d_comparaison_TL = network_trained.forward_TL(x_base_comparaison_TL)
+    heads_TL = network_trained.forward_TL(x_base_comparaison_TL)
 
     # Initial positon and velocity
     x0, px0, py0 = 0, 1, 0.0
@@ -422,7 +420,7 @@ def plot_all_TL(
 
         # Comparaison
         # Get head m
-        trajectoires_xy_TL = d_comparaison_TL[i]
+        trajectoires_xy_TL = heads_TL[i]
 
         if parametrisation:
             print("Initial x is {}", initial_x)
@@ -525,36 +523,36 @@ def update_min_max(x, y):
 ################################## Saving functions ##################################################
 ######################################################################################################
 
-def save_files(loss_, uf, m, initial_x, final_t, alpha_, width_base, number_of_epochs, grid_size, tl='') -> None:
+def save_files(loss_head, head, m, initial_x, final_t, alpha_, width_base, number_of_epochs, grid_size, tl='') -> None:
     # Saving the individual losses
     filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}loss_individual{tl}.p"
     f = open(filename, "wb")
-    pickle.dump(loss_, f)
+    pickle.dump(loss_head, f)
     f.close()
 
     # Saving the trajectories (x)
     filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_Trajectory_NN_x{tl}.p"
     # os.mkdir(filename)
     f = open(filename, "wb")
-    pickle.dump(uf.cpu().detach()[:, 0], f)
+    pickle.dump(head.cpu().detach()[:, 0], f)
     f.close()
     # Saving the trajectories (y)
     filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_y{tl}.p"
     # os.mkdir(filename)
     f = open(filename, "wb")
-    pickle.dump(uf.cpu().detach()[:, 1], f)
+    pickle.dump(head.cpu().detach()[:, 1], f)
     f.close()
     # Saving the trajectories (px)
     filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_px{tl}.p"
     # os.mkdir(filename)
     f = open(filename, "wb")
-    pickle.dump(uf.cpu().detach()[:, 2], f)
+    pickle.dump(head.cpu().detach()[:, 2], f)
     f.close()
     # Saving the trajectories (py)
     filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_py{tl}.p"
     # os.mkdir(filename)
     f = open(filename, "wb")
-    pickle.dump(uf.cpu().detach()[:, 3], f)
+    pickle.dump(head.cpu().detach()[:, 3], f)
     f.close()
 
 def save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl=""):
