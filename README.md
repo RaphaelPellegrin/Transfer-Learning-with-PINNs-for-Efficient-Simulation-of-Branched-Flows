@@ -17,7 +17,7 @@ pip install -r requirements
 ```
 
 Then the base training is performed in
-FFFN/base_training.py
+FFFN/Base/base_training.py
 
 where FFNN stands for Feed-Forward Neural Network. See Blake's and Dylan's GithHubs for the GANs code.
 
