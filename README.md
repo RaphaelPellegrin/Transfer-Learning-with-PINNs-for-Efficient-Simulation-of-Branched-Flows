@@ -33,5 +33,15 @@ When the training of the base is finished, TL is performed by calling ```tl.py``
 python tl.py
 ```
 
+# Citing
+
+If you use any component of this repository, please cite and reference the following:
+
+```
+Raphael Pellegrin, Blake Bullwinkel, Marios Mattheakis, and Pavlos Protopapas. Transfer
+learning with physics-informed neural networks for efficient simulation of branched flows. In
+NeurIPS Workshop on Machine Learning and Physical Sciences, 2022.
+```
+
 
 
