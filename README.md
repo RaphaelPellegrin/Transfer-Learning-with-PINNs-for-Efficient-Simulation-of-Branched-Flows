@@ -13,7 +13,7 @@ conda create -n <your_venv> python=3.11
 
 conda activate <your_venv>
 
-pip install -r requirements
+pip install -r requirements.txt
 ```
 
 Then the base training is performed in
