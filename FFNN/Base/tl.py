@@ -477,6 +477,7 @@ def main(number_of_epochs: int = 5,
     )
 
 
+
     # Need to code up the reattach closest head
     # The idea there is that for a new IC or a new potential
     # we start with a new head that is not random:

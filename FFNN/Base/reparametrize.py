@@ -35,11 +35,10 @@ def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=0):
 
 def unpack(head):
     """Used when we do not reparametrise
-
     Args:
         head:
             head to unpack
-
+            
     We just unpack the head.
     """
     x = head[:, 0].reshape((-1, 1))
