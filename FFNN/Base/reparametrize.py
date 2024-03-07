@@ -9,7 +9,7 @@ and decay the constraint exponentially in t.
 import torch
 
 
-def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=1):
+def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=0):
     """Reparametrize NN output to satisfy inital/boundary conditions
 
     Args:
@@ -17,6 +17,10 @@ def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=1):
             initial posiiton at t=0, x(0)
         initial_y:
             initial posiiton at t=0, y(0)
+        t:
+            tensor of times
+        head:
+            head to unpack, and re-parametrise
         initial_px:
             initial velocity in the x component at t=0, px(0)
         initial_py:
@@ -31,7 +35,10 @@ def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=1):
 
 def unpack(head):
     """Used when we do not reparametrise
-
+    Args:
+        head:
+            head to unpack
+            
     We just unpack the head.
     """
     x = head[:, 0].reshape((-1, 1))

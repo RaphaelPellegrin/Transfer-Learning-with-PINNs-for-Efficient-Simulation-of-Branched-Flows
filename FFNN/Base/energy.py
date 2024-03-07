@@ -4,8 +4,6 @@ import math
 
 import torch
 
-from params import means_cell
-
 
 def get_current_energy(
     initial_x: float,
@@ -18,6 +16,7 @@ def get_current_energy(
     partial_y,
     alpha_: float,
     sigma: float,
+    means_cell : list,
 ):
     """Updates the energy
 
