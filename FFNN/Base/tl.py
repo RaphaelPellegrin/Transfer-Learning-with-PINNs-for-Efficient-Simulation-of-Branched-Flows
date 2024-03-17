@@ -46,20 +46,12 @@ else:
     torch.set_default_tensor_type(torch.DoubleTensor)
     print("No GPU found, using cpu")
 
-
-"""## Numerical - copied to be the same as in Ray_TracingwithSavingandRandomSamplingansEnergy_forFeb15"""
 lineW = 3
 lineBoxW = 2
 font = {"size": 24}
 
 plt.rc("font", **font)
 # plt.rcParams['text.usetex'] = True
-
-
-"""## Experiments
-
-### Sums of Gaussians
-"""
 
 
 def perform_transfer_learning(
@@ -78,31 +70,41 @@ def perform_transfer_learning(
     alpha_: float = 0.1,
     sigma: float = 0.1,
     initial_x: float = 0,
+    initial_px: float = 1,
+    initial_py: float = 0,
     final_t: float = 1,
     width_base: int = 40,
     num_epochs_TL: int = 25000,
     grid_size: int = 400,
     number_of_heads_TL: int = 11,
-    number_of_epochs: int =5,
+    number_of_epochs: int = 5,
     path_saving_tl_model="TL/models",
-    energy_conservation: bool = False,
+    energy_conservation: bool = True,
 ):
-    """
+    """Does TL
 
     Args:
         network_in:
+            the trained neural network (base trained), some trained heads for a
+            bundle of initial conditions (ics)
         specify_initial_condition:
+            whether to specify the initial condition or to pick one at random
         init_specified:
+            the initial condition (specified)
         step_LR_step:
         step_LR_gamma:
-        adam_learning_rate
+        adam_learning_rate:
+            the learning rate for the adam optimizer
         sgd_momentum:
+            the momentum for stochastic gradient descent
         sgd_lr:
+            the learning rate for stochastic gradient descent
         energy_TL_weight:
+            the weight assigned to the "energy-conservation" loss
         use_SGD_TL:
         parametrisation:
-            whether the output of the NN is parametrized to satisfy the boundary conditions exactly or
-            whether that should be a component of the loss.
+            whether the output of the NN is parametrized to satisfy the boundary
+            conditions exactly or whether that should be a component of the loss.
         TL-Weighting:
         alpha_:
             constant to scale the potential
@@ -117,9 +119,10 @@ def perform_transfer_learning(
         means_cell should be of the forms [[mu_x1,mu_y1],..., [mu_xn,mu_yn]]
 
         random_ic:
-            whether we have random initial conditions within the possible y(0) values.
-            Otherwise, we divide the [0,1] interval into (width_heads-1) intervals and place
-            the initial conditions for y at each end.
+            whether we have random initial conditions within the possible y(0)
+            values.
+            Otherwise, we divide the [0,1] interval into (width_heads-1)
+            intervals and place the initial conditions for y at each end.
         scale:
             used in the scheduler
         sigma:
@@ -136,8 +139,9 @@ def perform_transfer_learning(
         grid_size:
             the number of random points (time) used in training
         number_of_heads:
-            the number of heads
+            the number of heads in the original (base+head) network
         number_of_heads_TL:
+            number of heads for TL
         path_saving_tl_model:
         print_legend:
         load_weights:
@@ -153,7 +157,7 @@ def perform_transfer_learning(
     # For comparaison
     temp_loss_TL = np.inf
 
-    loss_record_TL = np.zeros(num_epochs_TL)
+    loss_record_TL: np.ndarray = np.zeros(num_epochs_TL)
 
     ## LOADING WEIGHTS PART if path_saving_tl_model file exists and loadWeights=True
     print("We load the previous model for transfer learning")
@@ -161,13 +165,7 @@ def perform_transfer_learning(
     # checkpoint=torch.load(path_saving_tl_model)
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html
     network50 = copy.deepcopy(trained_network_base)
-    """
-    network50=NeuralNetwork(number_dims=width_base, number_dims_heads=width_heads, N=number_of_heads,  Number_heads_TL=number_of_heads_TL)
-    if not use_SGD_TL:
-    optimizer50=optim.Adam(network50.parameters(), lr=1e-3)
-    if use_SGD_TL:
-    optimizer50=optim.SGD(network50.parameters(), momentum=0, lr=1e-2)
-    """
+
     if not use_SGD_TL:
         optimizer50 = optim.Adam(network50.parameters(), lr=adam_learning_rate)
     if use_SGD_TL:
@@ -178,14 +176,8 @@ def perform_transfer_learning(
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer50, step_size=step_LR_step, gamma=step_LR_gamma
     )
-    # device = torch.device("cuda")
-    # network50.load_state_dict(checkpoint['model_state_dict'])
-    # network50.to(device)
-    # total_epochs=checkpoint['total_epochs']
-    # print("We previously trained for {} epochs".format(total_epochs))
-    # print('The loss was:', checkpoint['loss'], 'achieved at epoch', checkpoint['epoch'])
-    # print("Now we are going to freeze some layers and keep training after that.")
 
+    # Now we are going to freeze some layers and keep training after that
     for name, param in network50.named_parameters():
         # really not the best way to do this...
         # print("param", name)
@@ -199,9 +191,9 @@ def perform_transfer_learning(
             param.requires_grad = False
 
     # Dictionary for the initial conditions
-    initial_conditions_tl_dictionary = {}
+    initial_conditions_tl_dictionary: dict = {}
     # Dictionary for the initial energy for each initial conditions
-    H0_init_TL = {}
+    H0_init_TL: dict = {}
 
     if not specify_initial_condition:
         for j in range(number_of_heads_TL):
@@ -225,31 +217,36 @@ def perform_transfer_learning(
             initial_conditions_tl_dictionary[j] = initial_condition_TL
 
     # Keep track of the number of epochs
-    total_epochs_TL = 0
+    total_epochs_TL: int = 0
 
     # Dictionary keeping track of the loss for each head
-    losses_each_head_TL = {}
+    losses_each_head_TL: dict = {}
     for k in range(number_of_heads_TL):
         losses_each_head_TL[k] = np.zeros(num_epochs_TL)
 
     # For every epoch...
 
     # NO Random sampling! No need to sample every epoch!
-    t = torch.linspace(0, final_t, grid_size, requires_grad=True)
+    t: torch.Tensor = torch.linspace(0, final_t, grid_size, requires_grad=True)
     t = t.reshape(-1, 1)
 
     optimizer50.zero_grad()
-    x_base_TL = network50.base(t)
+
     with trange(num_epochs_TL) as tepoch_TL:
         for ne in tepoch_TL:
             tepoch_TL.set_description(f"Epoch {ne}")
             if ne > 0:
                 optimizer50.zero_grad()
+
             # Forward pass through the network
-            # x_base_TL = network50.base(t)
+            # this can actually be pre-computed and passed in directly to be faster
+            # It is frozen so it does not need to be trained
+            # TODO
+            x_base_TL = network50.base(t)
             d_TL = network50.forward_TL(x_base_TL)
+
             # loss
-            loss_TL = 0
+            loss_TL: float = 0
             # for saving the best loss (of individual heads)
             losses_part_current_TL = {}
 
@@ -263,7 +260,12 @@ def perform_transfer_learning(
                 # Outputs
                 if parametrisation:
                     x_TL, y_TL, px_TL, py_TL = reparametrize(
-                        initial_x=initial_x, initial_y=initial_y_TL, t=t, head=head_TL, initial_px=1, initial_py=0
+                        initial_x=initial_x,
+                        initial_y=initial_y_TL,
+                        t=t,
+                        head=head_TL,
+                        initial_px=1,
+                        initial_py=0,
                     )
                 elif not parametrisation:
                     x_TL, y_TL, px_TL, py_TL = unpack(head_TL)
@@ -296,7 +298,7 @@ def perform_transfer_learning(
                     partial_y_TL,
                     alpha_=alpha_,
                     sigma=sigma,
-                    means_cell=means_cell
+                    means_cell=means_cell,
                 )
 
                 ## We can finally set the energy for head l
@@ -319,8 +321,8 @@ def perform_transfer_learning(
                     L5_TL = ((x_TL[0, 0] - initial_x) ** 2) * TL_weighting
                     L6_TL = (y_TL[0, 0] - initial_y_TL) ** 2
                     ## Velocity
-                    L7_TL = (px_TL[0, 0] - 1) ** 2
-                    L8_TL = (py_TL[0, 0] - 0) ** 2
+                    L7_TL = (px_TL[0, 0] - initial_px) ** 2
+                    L8_TL = (py_TL[0, 0] - initial_py) ** 2
 
                 # Could add the penalty that H is constant L9
                 L9_TL = ((H_0_TL - H_curr_TL) ** 2).mean()
@@ -407,7 +409,7 @@ def perform_transfer_learning(
     print("The maximum of the individual losses (for TL) was {}".format(maxi_indi_TL))
     total_epochs_TL += num_epochs_TL
 
-    ### Save network2_TL here (to train again in the next cell) ######################
+    ### Save network2_TL here (to train again in the next cell) ################
     torch.save(
         {
             "model_state_dict": network2_TL.state_dict(),
@@ -447,42 +449,41 @@ def perform_transfer_learning(
     )
 
 
-####################################################################################################
-######################################## Main ######################################################
-####################################################################################################
+################################################################################
+######################################## Main ##################################
+################################################################################
 
 
-def main(number_of_epochs: int = 5,
+def main(
+    number_of_epochs: int = 50000,  # this last parameter is important as it dictates which "pre-trained" base model we use
     number_of_heads: int = 11,
     number_of_heads_TL: int = 1,
     final_time: float = 1,
-    width_base: int = 40) -> None:
-    initial_x = 0
-    initial_px=1
-    initial_py=0
-    alpha_ = 0.1
-    grid_size = 400
-    sigma = 0.1
-    parametrisation = True
-    num_epochs_TL=10000
-    number_of_epochs=5
+    width_base: int = 40,
+    initial_x=0,
+    initial_px=1,
+    initial_py=0,
+    alpha_=0.1,
+    grid_size=400,
+    sigma=0.1,
+    parametrisation=True,
+    num_epochs_TL=25000,
+) -> None:
+    """Does TL
 
+    Args:
+
+
+
+    """
 
     filename_saved = f"Data/Initial_x_0_final_t_1_alpha_0.1_width_base_40_number_of_epochs{number_of_epochs}_grid_size_400_network_state.pth"
     network_base = NeuralNetwork(
-        width_base=40, number_dims_heads=10, number_heads=11, number_heads_tl=1
+        width_base=40, width_heads=10, number_heads=number_of_heads, number_heads_tl=1
     )
     network_base.load_state_dict(
         torch.load(filename_saved, map_location=torch.device("cpu"))
     )
-
-
-
-    # Need to code up the reattach closest head
-    # The idea there is that for a new IC or a new potential
-    # we start with a new head that is not random:
-    # we use the head corresponding to the closest
-    # ic or potential that has been trained with the base
 
     (
         network2_TL,
@@ -501,10 +502,14 @@ def main(number_of_epochs: int = 5,
         sgd_lr=0.025,
         use_SGD_TL=True,
         parametrisation=True,
+        initial_x=initial_x,
+        initial_px=initial_px,
+        initial_py=initial_py,
         num_epochs_TL=num_epochs_TL,
         grid_size=400,
         number_of_heads_TL=number_of_heads_TL,
-        number_of_epochs=number_of_epochs
+        number_of_epochs=number_of_epochs,
+        energy_conservation=True,
     )
 
     plot_all_TL(
@@ -526,6 +531,13 @@ def main(number_of_epochs: int = 5,
         times_t=t,
         print_legend=True,
     )
+
+    # TODO
+    # Need to code up the reattach closest head
+    # The idea there is that for a new IC or a new potential
+    # we start with a new head that is not random:
+    # we use the head corresponding to the closest
+    # ic or potential that has been trained with the base
 
 
 if __name__ == "__main__":

@@ -36,18 +36,22 @@ def potential_grid(
         final_t:
             final time t
         alpha_:
+            constant to scale the potential
         means_cell:
             means of the Gaussians used in making the potential
         sigma:
+            used when constructing the potential. Std of the Gaussian (shared)
 
 
     """
     x1: np.ndarray = np.linspace(-0.1, 1.1, 500)
     y1: np.ndarray = np.linspace(-0.1, 1.1, 500)
+    x: np.ndarray
+    y: np.ndarray
     x, y = np.meshgrid(x1, y1)
 
     # Saving the means_cell passed in
-    filename = f"Data/Means.p"
+    filename: str = f"Data/Means.p"
     f = open(filename, "wb")
     pickle.dump(means_cell, f)
     f.close()
@@ -66,10 +70,14 @@ def potential_grid(
     for i in means_cell:
         mu_x1 = i[0]
         mu_y1 = i[1]
-        potential_grid_values += -alpha_ * np.exp(-(((x - mu_x1) ** 2 + (y - mu_y1) ** 2) / sigma**2) / 2)
+        potential_grid_values += -alpha_ * np.exp(
+            -(((x - mu_x1) ** 2 + (y - mu_y1) ** 2) / sigma**2) / 2
+        )
 
     # Saving the values of potential_grid_values on the grid
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
+    filename: str = (
+        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
+    )
     f = open(filename, "wb")
     pickle.dump(potential_grid_values, f)
     f.close()
@@ -95,8 +103,39 @@ def plot_all(
     H0_init,
     times_t,
     print_legend: bool = True,
-    tl = '' # for TL
+    tl: str = "",  # for TL
 ) -> None:
+    """Plots the trajectories
+
+    Args:
+        number_of_epochs:
+        number_of_heads:
+            the number of heads
+        loss_record:
+        loss_each_head:
+        network_trained:
+        d2:
+        parametrisation:
+        initial_conditions_dictionary
+        initial_x:
+            inital value for x(0)
+        final_t:
+            final time
+        width_base:
+            the width of the base
+        alpha_:
+            constant to scale the potential
+        grid_size:
+            the number of random points (time) used in training
+        sigma:
+            used when constructing the potential. Std of the Gaussian (shared)
+        H0_init:
+        times_t:
+        print_legend:
+        tl:
+
+
+    """
     # Create a figure
     f, ax = plt.subplots(5, 1, figsize=(20, 80))
 
@@ -198,7 +237,7 @@ def plot_all(
         )
         # maximum_x, min_final, minimum_y, maximum_y  = update_min_max(x, y)
 
-        save_file_numerical(x,y,px,py, initial_x, final_t, alpha_)
+        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_)
         ax[0].plot(x, y, "g", linestyle=":", linewidth=lineW)
 
         # Comparaison
@@ -206,9 +245,28 @@ def plot_all(
         trajectoires_xy = heads_comparaison[i]
 
         if parametrisation:
-            x_comparaison, y_comparaison, px_comparaison, py_comparaison = reparametrize(initial_x, initial_y=initial_y, t=t_comparaison, head=trajectoires_xy, initial_px=1, initial_py=0)
+            x_comparaison, y_comparaison, px_comparaison, py_comparaison = (
+                reparametrize(
+                    initial_x,
+                    initial_y=initial_y,
+                    t=t_comparaison,
+                    head=trajectoires_xy,
+                    initial_px=1,
+                    initial_py=0,
+                )
+            )
             # MSE
-            mse = compute_mse(x_comparaison, y_comparaison, px_comparaison, py_comparaison, x, y, px, py, Nt)
+            mse = compute_mse(
+                x_comparaison,
+                y_comparaison,
+                px_comparaison,
+                py_comparaison,
+                x,
+                y,
+                px,
+                py,
+                Nt,
+            )
             # Should probably do a dict that saves them / save them to a file for the cluster
             print("The mse for head {} is {}".format(i, mse))
 
@@ -229,7 +287,7 @@ def plot_all(
             )
 
         elif not parametrisation:
-            mse = compute_mse_(trajectoires_xy, x,y,px,py, Nt)
+            mse = compute_mse_(trajectoires_xy, x, y, px, py, Nt)
             # Should probably do a dict that saves them / save them to a file for the cluster
             print("The mse for head {} is {}".format(i, mse))
 
@@ -247,7 +305,9 @@ def plot_all(
             )
 
             # Compute the energy along t_comparaison
-            x_comparaison, y_comparaison, px_comparaison, py_comparaison = unpack(trajectoires_xy)
+            x_comparaison, y_comparaison, px_comparaison, py_comparaison = unpack(
+                trajectoires_xy
+            )
 
         # Theoretical energy
         print("The theoretical energy is {}".format(H0_init[i]))
@@ -272,11 +332,15 @@ def plot_all(
             )
         ax[4].plot(t_comparaison.cpu().detach(), H_curr_comparaison.cpu().detach())
 
-    x1, y1, potential_grid_values = potential_grid(initial_x, final_t, alpha_, means_cell, sigma)
+    x1, y1, potential_grid_values = potential_grid(
+        initial_x, final_t, alpha_, means_cell, sigma
+    )
     ax[0].contourf(x1, y1, potential_grid_values, levels=20, cmap="Reds_r")
 
     # Make a grid, set the title and the labels
-    ax[0].set_title("Solutions (NN and Numerical) with the potential potential_grid_values")
+    ax[0].set_title(
+        "Solutions (NN and Numerical) with the potential potential_grid_values"
+    )
     ax[0].set_xlabel("$x$")
     ax[0].set_ylabel("$y$")
     ax[0].set_xlim(-0.1, 1.1)
@@ -304,6 +368,7 @@ def plot_all(
     ax[4].set_ylabel("Energy")
 
     plt.savefig("Data/Fig.png")
+
 
 # Check but I think the difference with the function above is that this one just
 # does not plot the diff in x and y. If that's the case
@@ -343,7 +408,17 @@ def plot_all_TL(
         # The loss
         loss_head = losses_each_head[m]
 
-        save_files(loss_head, head, m, initial_x, final_t, alpha_, width_base, number_of_epochs, grid_size)
+        save_files(
+            loss_head,
+            head,
+            m,
+            initial_x,
+            final_t,
+            alpha_,
+            width_base,
+            number_of_epochs,
+            grid_size,
+        )
         #################################################################
 
         if parametrisation:
@@ -411,10 +486,17 @@ def plot_all_TL(
         initial_y = initial_conditions_dictionary[i]
         print("The initial condition used is", initial_conditions_dictionary[i])
         x, y, px, py = numerical_integrator(
-            t, x0, initial_conditions_dictionary[i], px0, py0, means_cell, sigma=sigma, alpha_=alpha_
+            t,
+            x0,
+            initial_conditions_dictionary[i],
+            px0,
+            py0,
+            means_cell,
+            sigma=sigma,
+            alpha_=alpha_,
         )
         # maximum_x, min_final, minimum_y, maximum_y  = update_min_max(x, y)
-        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl='_TL')
+        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl="_TL")
 
         ax[1].plot(x, y, "g", linestyle=":", linewidth=lineW)
 
@@ -425,11 +507,21 @@ def plot_all_TL(
         if parametrisation:
             print("Initial x is {}", initial_x)
             print("Initial y is {}", initial_y)
-            x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = reparametrize(
-                initial_x, initial_y, t_comparaison, trajectoires_xy_TL
+            x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = (
+                reparametrize(initial_x, initial_y, t_comparaison, trajectoires_xy_TL)
             )
             # mse:
-            mse_TL = compute_mse(x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL, x, y, px, py, Nt)
+            mse_TL = compute_mse(
+                x_comparaison_TL,
+                y_comparaison_TL,
+                px_comparaison_TL,
+                py_comparaison_TL,
+                x,
+                y,
+                px,
+                py,
+                Nt,
+            )
             # Should probably do a dict that saves them / save them to a file for the cluster
             print("The mse for head {} is {}".format(i, mse_TL))
 
@@ -437,7 +529,17 @@ def plot_all_TL(
             x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = (
                 unpack(trajectoires_xy_TL)
             )
-            mse_TL=compute_mse(x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL, x, y, px, py, Nt)
+            mse_TL = compute_mse(
+                x_comparaison_TL,
+                y_comparaison_TL,
+                px_comparaison_TL,
+                py_comparaison_TL,
+                x,
+                y,
+                px,
+                py,
+                Nt,
+            )
             # Should probably do a dict that saves them / save them to a file for the cluster
             print("The mse (TL) for head {} is {}".format(i, mse_TL))
             # Is there a way to print it for every epoch like Blake? Yes, but more expensive. I
@@ -468,7 +570,9 @@ def plot_all_TL(
         ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_TL.cpu().detach())
 
     print("For TL, we had {} head".format(number_of_heads))
-    x1, y1, potential_grid_values = potential_grid(initial_x, final_t, alpha_, means_cell, sigma)
+    x1, y1, potential_grid_values = potential_grid(
+        initial_x, final_t, alpha_, means_cell, sigma
+    )
 
     ax[1].contourf(x1, y1, potential_grid_values, levels=20, cmap="Reds_r")
     ax[1].set_xlim(-0.1, 1.1)
@@ -477,8 +581,26 @@ def plot_all_TL(
     plt.savefig(filename_fig)
 
 
+def compute_mse_(
+    trajectoires_xy,
+    x: torch.Tensor,
+    y: torch.Tensor,
+    px: torch.Tensor,
+    py: torch.Tensor,
+    Nt,
+) -> float:
+    """Returns the Mean Square Error (MSE) between the numerical
+    solution and the NN solution
 
-def compute_mse_(trajectoires_xy, x, y,px,py, Nt):
+    Args:
+        trajectoires_xy:
+        x
+        y
+        px
+        py
+        Nt:
+
+    """
     # mse:
     mse = ((trajectoires_xy.cpu().detach()[:, 0] - x) ** 2).mean() + (
         (trajectoires_xy.cpu().detach()[:, 1] - y) ** 2
@@ -489,17 +611,14 @@ def compute_mse_(trajectoires_xy, x, y,px,py, Nt):
     mse = mse / (4 * Nt)
     return mse
 
+
 # MSE
-def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt):
+def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
     # mse:
-    mse = (
-        (x_.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))) ** 2
-    ).mean() + (
+    mse = ((x_.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))) ** 2).mean() + (
         (y_.cpu().detach().reshape((-1, 1)) - y.reshape((-1, 1))) ** 2
     ).mean()
-    mse += (
-        (px_.cpu().detach().reshape((-1, 1)) - px.reshape((-1, 1))) ** 2
-    ).mean() + (
+    mse += ((px_.cpu().detach().reshape((-1, 1)) - px.reshape((-1, 1))) ** 2).mean() + (
         (py_.cpu().detach().reshape((-1, 1)) - py.reshape((-1, 1))) ** 2
     ).mean()
     mse = mse / (4 * Nt)
@@ -519,11 +638,43 @@ def update_min_max(x, y):
     return maximum_x, min_final, minimum_y, maximum_y
 
 
-######################################################################################################
-################################## Saving functions ##################################################
-######################################################################################################
+################################################################################
+################################## Saving functions ############################
+################################################################################
 
-def save_files(loss_head, head, m, initial_x, final_t, alpha_, width_base, number_of_epochs, grid_size, tl='') -> None:
+
+def save_files(
+    loss_head,
+    head,
+    m,
+    initial_x: float,
+    final_t: float,
+    alpha_,
+    width_base: int,
+    number_of_epochs: int,
+    grid_size: int,
+    tl="",
+) -> None:
+    """
+
+    Args:
+        loss_head:
+        head:
+        m:
+        initial_x:
+            inital value for x(0)
+        final_t:
+            final time
+        alpha_:
+            constant to scale the potential
+        width_base:
+            the width of the base network
+            shared by all layers in the base
+        grid_size:
+            the number of random points (time) used in training
+
+
+    """
     # Saving the individual losses
     filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}loss_individual{tl}.p"
     f = open(filename, "wb")
@@ -554,6 +705,7 @@ def save_files(loss_head, head, m, initial_x, final_t, alpha_, width_base, numbe
     f = open(filename, "wb")
     pickle.dump(head.cpu().detach()[:, 3], f)
     f.close()
+
 
 def save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl=""):
     # Saving the (numerical trajectories)
