@@ -9,8 +9,10 @@ and decay the constraint exponentially in t.
 import torch
 
 
-def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=0):
-    """Reparametrize NN output to satisfy inital/boundary conditions
+def reparametrize(
+    initial_x, initial_y, t, head, initial_px=1, initial_py=0
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Reparametrizes NN output to satisfy inital/boundary conditions
 
     Args:
         initial_x:
@@ -26,23 +28,23 @@ def reparametrize(initial_x, initial_y, t, head, initial_px=1, initial_py=0):
         initial_py:
             initial velocity in the y component at t=0, py(0)
     """
-    x = initial_x + (1 - torch.exp(-t)) * head[:, 0].reshape((-1, 1))
-    y = initial_y + (1 - torch.exp(-t)) * head[:, 1].reshape((-1, 1))
-    px = initial_px + (1 - torch.exp(-t)) * head[:, 2].reshape((-1, 1))
-    py = initial_py + (1 - torch.exp(-t)) * head[:, 3].reshape((-1, 1))
+    x: torch.Tensor = initial_x + (1 - torch.exp(-t)) * head[:, 0].reshape((-1, 1))
+    y: torch.Tensor = initial_y + (1 - torch.exp(-t)) * head[:, 1].reshape((-1, 1))
+    px: torch.Tensor = initial_px + (1 - torch.exp(-t)) * head[:, 2].reshape((-1, 1))
+    py: torch.Tensor = initial_py + (1 - torch.exp(-t)) * head[:, 3].reshape((-1, 1))
     return x, y, px, py
 
 
-def unpack(head):
+def unpack(head) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Used when we do not reparametrise
     Args:
         head:
             head to unpack
-            
+
     We just unpack the head.
     """
-    x = head[:, 0].reshape((-1, 1))
-    y = head[:, 1].reshape((-1, 1))
-    px = head[:, 2].reshape((-1, 1))
-    py = head[:, 3].reshape((-1, 1))
+    x: torch.Tensor = head[:, 0].reshape((-1, 1))
+    y: torch.Tensor = head[:, 1].reshape((-1, 1))
+    px: torch.Tensor = head[:, 2].reshape((-1, 1))
+    py: torch.Tensor = head[:, 3].reshape((-1, 1))
     return x, y, px, py

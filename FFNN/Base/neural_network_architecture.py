@@ -10,53 +10,81 @@ class NeuralNetwork(nn.Module):
     def __init__(
         self,
         width_base: int = 100,
-        number_dims_heads: int = 100,
-        depth_body: int = 4,
+        width_heads: int = 100,
+        depth_base: int = 4,
         number_heads: int = 1,
         number_heads_tl: int = 1,
     ):
         """width_base is the number of nodes within each layer
-        depth_body is 1 minus the number of hidden layers
+        depth_base is 1 minus the number of hidden layers
         N is the number of heads
+
+        Nota bene: if we change the name of the layers, we have
+        to remember to change the name in other scripts too
+        (for freezing)
+
+        Args:
+            width_base:
+                the width of the base network
+                shared by all layers in the base
+            width_heads: 
+                the width of the heads
+                shared by all heads
+            depth_base: 
+                the depth of the base
+            number_heads: 
+                the number of heads
+            number_heads_tl: 
+                the number of heads for tl (can be done in parallel)
+
         """
         super(NeuralNetwork, self).__init__()
         self.number_heads = number_heads
         self.number_heads_tl = number_heads_tl
-        self.depth_body = depth_body
+        self.depth_base = depth_base
         self.width_base = width_base
         # Tanh activation function
         self.nl = nn.Tanh()
+        # first hidden layer: input 1 to width_base
         self.lin1 = nn.Linear(1, width_base)
+        # second hidden layer
         self.lin2 = nn.ModuleList([nn.Linear(width_base, width_base)])
+        # subsequent hidden layers
         self.lin2.extend(
-            [nn.Linear(width_base, width_base) for i in range(depth_body - 1)]
+            [nn.Linear(width_base, width_base) for i in range(depth_base - 1)]
         )
-        self.lina = nn.ModuleList([nn.Linear(width_base, number_dims_heads)])
+        # from last hidden layer of base to head number 1
+        self.lina = nn.ModuleList([nn.Linear(width_base, width_heads)])
+        # extend to all heads
         self.lina.extend(
-            [nn.Linear(width_base, number_dims_heads) for i in range(number_heads - 1)]
+            [nn.Linear(width_base, width_heads) for i in range(number_heads - 1)]
         )
         # 4 outputs for x,y, p_x, p_y
-        self.lout1 = nn.ModuleList([nn.Linear(number_dims_heads, 4, bias=True)])
+        # technically not necessary has no non-linear activation function is applied
+        # but leaving the possibility open
+        self.lout1 = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
         self.lout1.extend(
             [
-                nn.Linear(number_dims_heads, 4, bias=True)
+                nn.Linear(width_heads, 4, bias=True)
                 for i in range(number_heads - 1)
             ]
         )
 
         ### FOR TL
-        self.lina_TL = nn.ModuleList([nn.Linear(width_base, number_dims_heads)])
+        # from last hidden layer of base to head number 1
+        self.lina_TL = nn.ModuleList([nn.Linear(width_base, width_heads)])
+        # extend to all heads
         self.lina_TL.extend(
             [
-                nn.Linear(width_base, number_dims_heads)
+                nn.Linear(width_base, width_heads)
                 for i in range(number_heads_tl - 1)
             ]
         )
         # 4 outputs for x,y, p_x, p_y
-        self.lout1_TL = nn.ModuleList([nn.Linear(number_dims_heads, 4, bias=True)])
+        self.lout1_TL = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
         self.lout1_TL.extend(
             [
-                nn.Linear(number_dims_heads, 4, bias=True)
+                nn.Linear(width_heads, 4, bias=True)
                 for i in range(number_heads_tl - 1)
             ]
         )
@@ -64,7 +92,7 @@ class NeuralNetwork(nn.Module):
     def base(self, t):
         x = self.lin1(t)
         x = self.nl(x)
-        for m in range(self.depth_body):
+        for m in range(self.depth_base):
             x = self.lin2[m](x)
             x = self.nl(x)
         return x

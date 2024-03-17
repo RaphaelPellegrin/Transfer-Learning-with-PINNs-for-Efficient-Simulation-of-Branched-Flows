@@ -31,8 +31,6 @@ from params import means_cell
 from plot import plot_all
 from reparametrize import reparametrize, unpack
 
-# test
-
 
 # Use GPU if possible
 if torch.cuda.is_available():
@@ -72,18 +70,19 @@ def initial_full_network_training(
     energy_conservation: bool = False,
     norm_clipping: bool = False,
 ) -> NeuralNetwork:
-    """
+    """Performs full training (base + heads)
+
+    means_cell should be of the forms [[mu_x,mu_y],..., [mu_xn,mu_yn]]
 
     Args:
-        means_cell should be of the forms [[mu_x,mu_y],..., [mu_xn,mu_yn]]
-
         random_ic:
-            whether we have random initial conditions within the possible y(0) values.
-            Otherwise, we divide the [0,1] interval into (width_heads-1) intervals and place
-            the initial conditions for y at each end.
+            whether we have random initial conditions within the possible y(0) 
+            values. Otherwise, we divide the [0,1] interval into (width_heads-1) 
+            intervals and place the initial conditions for y at each end.
         parametrisation:
-            whether the output of the NN is parametrized to satisfy the boundary conditions exactly or
-            whether that should be a component of the loss.
+            whether the output of the NN is parametrized to satisfy the boundary 
+            conditions exactly or whether that should be a component of the 
+            loss.
         scale:
             used in the scheduler
         alpha_:
@@ -92,11 +91,14 @@ def initial_full_network_training(
             used when constructing the potential. Std of the Gaussian (shared)
         initial_x:
             inital value for x(0)
+        initial_px:
+            inital value for px(0)
+        initial_py:
+            inital value for py(0)
         final_t:
             final time
         means_cell:
             the means used for tge Gaussians
-        alpha_:
         width_base:
             the width of the base
         width_heads:
@@ -108,12 +110,12 @@ def initial_full_network_training(
         number_of_heads:
             the number of heads
         number_of_heads_TL:
-        path_saving_model:
-        print_legend:
         load_weights:
+            whether to load some pre-saved weights for the NN
         energy_conservation:
             whether to add an energy conservation loss to the total loss
         norm_clipping:
+            whether to do norm clipping
     """
     # We will time the process
     # Access the current time
@@ -133,7 +135,7 @@ def initial_full_network_training(
     # Set up the network
     network = NeuralNetwork(
         width_base=width_base,
-        number_dims_heads=width_heads,
+        width_heads=width_heads,
         number_heads=number_of_heads,
         number_heads_tl=number_of_heads_TL,
     )
@@ -356,9 +358,9 @@ def initial_full_network_training(
     )
 
 
-####################################################################################################
-######################################## Main ######################################################
-####################################################################################################
+################################################################################
+######################################## Main ##################################
+################################################################################
 
 # finish setting up all the clicks with the inputs
 # to initial_full_network_training and pass in
@@ -415,7 +417,7 @@ def main(
         sigma=sigma,
     )
 
-    ### Save network2 here (to train again in the next cell) ######################
+    ### Save network2 here (to train again in the next cell) ###################
     torch.save(
         {
             "model_state_dict": network_base.state_dict(),
