@@ -109,6 +109,7 @@ def plot_all(
 
     Args:
         number_of_epochs:
+            number of epochs
         number_of_heads:
             the number of heads
         loss_record:
@@ -116,7 +117,10 @@ def plot_all(
         network_trained:
         d2:
         parametrisation:
-        initial_conditions_dictionary
+            whether the network is reparametrised to satisfy initial
+            conditions
+        initial_conditions_dictionary:
+            dictionary that contains the head initial conditions
         initial_x:
             inital value for x(0)
         final_t:
@@ -130,9 +134,12 @@ def plot_all(
         sigma:
             used when constructing the potential. Std of the Gaussian (shared)
         H0_init:
+            contains the inital energies of different heads
         times_t:
         print_legend:
+            wether to print the legend or not
         tl:
+            string to append to legends etc (TL)
 
 
     """

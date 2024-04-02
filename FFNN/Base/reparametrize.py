@@ -10,7 +10,12 @@ import torch
 
 
 def reparametrize(
-    initial_x, initial_y, t, head, initial_px=1, initial_py=0
+    initial_x: float,
+    initial_y: float,
+    t: torch.Tensor,
+    head,
+    initial_px: float = 1,
+    initial_py: float = 0,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Reparametrizes NN output to satisfy inital/boundary conditions
 

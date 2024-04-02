@@ -80,7 +80,15 @@ def perform_transfer_learning(
     number_of_epochs: int = 5,
     path_saving_tl_model="TL/models",
     energy_conservation: bool = True,
-):
+) -> tuple[
+    NeuralNetwork,
+    NeuralNetwork,
+    torch.Tensor,
+    np.ndarray,
+    dict[np.ndarray],
+    dict[float],
+    dict[float],
+]:
     """Does TL
 
     Args:
@@ -92,7 +100,9 @@ def perform_transfer_learning(
         init_specified:
             the initial condition (specified)
         step_LR_step:
+            step size for the LR scheduler torch.optim.lr_scheduler.StepL
         step_LR_gamma:
+            gamma for the LR scheduler torch.optim.lr_scheduler.StepL
         adam_learning_rate:
             the learning rate for the adam optimizer
         sgd_momentum:
@@ -102,52 +112,49 @@ def perform_transfer_learning(
         energy_TL_weight:
             the weight assigned to the "energy-conservation" loss
         use_SGD_TL:
+            whether to use SGD for TL. Otherwise use Adam.
         parametrisation:
             whether the output of the NN is parametrized to satisfy the boundary
             conditions exactly or whether that should be a component of the loss.
-        TL-Weighting:
+        TL_weighting:
+            hyperparameter to controls the penalty of difference of x_TL
+            at 0.
         alpha_:
             constant to scale the potential
-        width_base:
-            the width of the base
-        number_of_epochs:
-            the number of epochs we train the NN for
-        number_of_epochs_TL:
-            the number of epochs we train the NN for the TL
-
-
-        means_cell should be of the forms [[mu_x1,mu_y1],..., [mu_xn,mu_yn]]
-
-        random_ic:
-            whether we have random initial conditions within the possible y(0)
-            values.
-            Otherwise, we divide the [0,1] interval into (width_heads-1)
-            intervals and place the initial conditions for y at each end.
-        scale:
-            used in the scheduler
         sigma:
             used when constructing the potential. Std of the Gaussian (shared)
         initial_x:
             inital value for x(0)
+        initial_px:
+        initial_py:
         final_t:
             final time
-        means_cell:
-            the means used for tge Gaussians
-        alpha_:
-        width_heads:
-            the width of each head
+        width_base:
+            the width of the base
+        number_of_epochs_TL:
+            the number of epochs we train the NN for the TL
         grid_size:
             the number of random points (time) used in training
-        number_of_heads:
-            the number of heads in the original (base+head) network
         number_of_heads_TL:
             number of heads for TL
+        number_of_epochs:
+            the number of epochs we train the NN for
         path_saving_tl_model:
-        print_legend:
-        load_weights:
         energy_conservation:
             whether to add an energy conservation loss to the total loss
-        norm_clipping:
+
+    Returns:
+        network2_TL:
+        d2_TL:
+        t:
+        loss_record_TL:
+            the total loss log, for TL
+        losses_each_head_TL:
+            the losses log of each head, for TL
+        initial_conditions_tl_dictionary:
+            the initial conditions (as a dictionary) of the TL heads
+        H0_init_TL:
+            the initial energies of the TL heads
     """
 
     trained_network_base = copy.deepcopy(network_in)
@@ -173,6 +180,8 @@ def perform_transfer_learning(
             network50.parameters(), momentum=sgd_momentum, lr=sgd_lr
         )
 
+    # Decays the learning rate of each parameter group by gamma every step_size
+    # epochs.
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer50, step_size=step_LR_step, gamma=step_LR_gamma
     )
@@ -460,20 +469,46 @@ def main(
     number_of_heads_TL: int = 1,
     final_time: float = 1,
     width_base: int = 40,
-    initial_x=0,
-    initial_px=1,
-    initial_py=0,
-    alpha_=0.1,
-    grid_size=400,
-    sigma=0.1,
-    parametrisation=True,
-    num_epochs_TL=25000,
+    initial_x: float = 0,
+    initial_px: float = 1,
+    initial_py: float = 0,
+    alpha_: float = 0.1,
+    grid_size: int = 400,
+    sigma: float = 0.1,
+    parametrisation: bool = True,
+    num_epochs_TL: int = 25000,
 ) -> None:
     """Does TL
 
     Args:
-
-
+        number_of_epochs:
+            the number of epochs we trained the NN for
+        number_of_heads:
+            the number of heads
+        number_of_heads_TL:
+            number of heads when we do TL
+        final_time:
+            final time
+        width_base:
+            the width of the base
+        initial_x:
+            inital value for x(0)
+        initial_px:
+            inital value for px(0)
+        initial_py:
+            inital value for py(0)
+        alpha_:
+            constant to scale the potential
+        grid_size:
+            the number of random points (time) used in training
+        sigma:
+            used when constructing the potential. Std of the Gaussian (shared)
+        parametrisation:
+            whether the output of the NN is parametrized to satisfy the boundary
+            conditions exactly or whether that should be a component of the
+            loss.
+        num_epochs_TL:
+            the number of epochs we train the NN TL heads for
 
     """
 

@@ -11,6 +11,7 @@ def diff(u, t: torch.Tensor, order=1) -> torch.Tensor:
         u:
         t:
         order:
+            the order of the derivative
 
     """
     # code adapted from neurodiffeq library
@@ -18,7 +19,7 @@ def diff(u, t: torch.Tensor, order=1) -> torch.Tensor:
     """The derivative of a variable with respect to another."""
     # ones = torch.ones_like(u)
 
-    derivative = torch.cat(
+    derivative: torch.Tensor | None = torch.cat(
         [
             torch.autograd.grad(u[:, i].sum(), t, create_graph=True)[0]
             for i in range(u.shape[1])

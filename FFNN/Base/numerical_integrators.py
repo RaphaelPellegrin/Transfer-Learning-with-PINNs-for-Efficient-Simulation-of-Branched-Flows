@@ -18,7 +18,11 @@ from scipy.integrate import odeint
 
 # Use below in the Scipy Solver
 def ray_tracing_system(
-    u, t, means_gaussian, sigma: float = 0.1, alpha_: float = 0.1
+    u,
+    t,
+    means_gaussian: list[list[float, float]],
+    sigma: float = 0.1,
+    alpha_: float = 0.1,
 ) -> list:
     """Returns the derivatives of the system
 
@@ -73,7 +77,7 @@ def numerical_integrator(
     y0: float,
     px0: float,
     py0: float,
-    means_gaussian,
+    means_gaussian: list[list[float, float]],
     sigma: float = 0.1,
     alpha_: float = 0.1,
 ):
