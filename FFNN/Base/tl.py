@@ -264,8 +264,8 @@ def perform_transfer_learning(
                         initial_y=initial_y_TL,
                         t=t,
                         head=head_TL,
-                        initial_px=1,
-                        initial_py=0,
+                        initial_px=initial_px,
+                        initial_py=initial_py,
                     )
                 elif not parametrisation:
                     x_TL, y_TL, px_TL, py_TL = unpack(head_TL)
