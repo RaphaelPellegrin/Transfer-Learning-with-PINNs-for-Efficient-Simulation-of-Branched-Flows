@@ -126,7 +126,9 @@ def perform_transfer_learning(
         initial_x:
             inital value for x(0)
         initial_px:
+            inital value for px(0)
         initial_py:
+            inital value for py(0)
         final_t:
             final time
         width_base:
@@ -140,13 +142,17 @@ def perform_transfer_learning(
         number_of_epochs:
             the number of epochs we train the NN for
         path_saving_tl_model:
+            path to save the model (tl) when trained
         energy_conservation:
             whether to add an energy conservation loss to the total loss
 
     Returns:
-        network2_TL:
-        d2_TL:
+        network_trained_TL:
+            the full network, trained on the TL task
+        output_TL:
+            the output of the trained network_trained_TL
         t:
+            the tensor of times (linspaces)
         loss_record_TL:
             the total loss log, for TL
         losses_each_head_TL:
@@ -397,7 +403,7 @@ def perform_transfer_learning(
             # If it is the best loss so far, we update the best loss and saved the model
             if loss_TL.item() < temp_loss_TL:
                 epoch_mini_TL = ne + total_epochs_TL
-                network2_TL = copy.deepcopy(network50)
+                network_trained_TL = copy.deepcopy(network50)
                 temp_loss_TL = loss_TL.item()
                 individual_losses_saved_TL = losses_part_current_TL
 
@@ -418,10 +424,10 @@ def perform_transfer_learning(
     print("The maximum of the individual losses (for TL) was {}".format(maxi_indi_TL))
     total_epochs_TL += num_epochs_TL
 
-    ### Save network2_TL here (to train again in the next cell) ################
+    ### Save network_trained_TL here (to train again in the next cell) ################
     torch.save(
         {
-            "model_state_dict": network2_TL.state_dict(),
+            "model_state_dict": network_trained_TL.state_dict(),
             "loss": temp_loss_TL,
             "epoch": epoch_mini_TL,
             "optimizer_state_dict": optimizer50.state_dict(),
@@ -433,12 +439,12 @@ def perform_transfer_learning(
     # Saving the network
     filename = f"TL/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_TL)}_grid_size_{str(grid_size)}_Network_state_Tl.p"
     f = open(filename, "wb")
-    pickle.dump(network2_TL.state_dict(), f)
+    pickle.dump(network_trained_TL.state_dict(), f)
     f.close()
 
     # Forward pass (network2 is the best network now)
-    x_base_TL2 = network2_TL.base(t)
-    d2_TL = network2_TL.forward_TL(x_base_TL2)
+    x_base_TL2 = network_trained_TL.base(t)
+    output_TL = network_trained_TL.forward_TL(x_base_TL2)
 
     initial_y = initial_conditions_tl_dictionary[0]
     # Saving the loss
@@ -448,8 +454,8 @@ def perform_transfer_learning(
     f.close()
 
     return (
-        network2_TL,
-        d2_TL,
+        network_trained_TL,
+        output_TL,
         t,
         loss_record_TL,
         losses_each_head_TL,
@@ -521,8 +527,8 @@ def main(
     )
 
     (
-        network2_TL,
-        d2_TL,
+        network_trained_TL,
+        output_TL,
         t,
         loss_record_TL,
         losses_each_head_TL,
@@ -552,8 +558,8 @@ def main(
         number_of_heads=number_of_heads_TL,
         loss_record=loss_record_TL,
         losses_each_head=losses_each_head_TL,
-        network_trained=network2_TL,
-        d2=d2_TL,
+        network_trained=network_trained_TL,
+        d2=output_TL,
         parametrisation=parametrisation,
         initial_conditions_dictionary=initial_conditions_tl_dictionary,
         initial_x=initial_x,
