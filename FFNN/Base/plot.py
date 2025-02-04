@@ -9,7 +9,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-
 from neural_network_architecture import NeuralNetwork
 from numerical_integrators import numerical_integrator
 from params import means_cell
@@ -51,15 +50,13 @@ def potential_grid(
     x, y = np.meshgrid(x1, y1)
 
     # Saving the means_cell passed in
-    filename: str = f"Data/Means.p"
+    filename: str = "Data/Means.p"
     f = open(filename, "wb")
     pickle.dump(means_cell, f)
     f.close()
 
     # Saving the mesh grid
-    filename: str = (
-        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
-    )
+    filename: str = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
     f = open(filename, "wb")
     pickle.dump(x, f)
     pickle.dump(y, f)
@@ -75,9 +72,7 @@ def potential_grid(
         )
 
     # Saving the values of potential_grid_values on the grid
-    filename: str = (
-        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
-    )
+    filename: str = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
     f = open(filename, "wb")
     pickle.dump(potential_grid_values, f)
     f.close()
@@ -245,15 +240,18 @@ def plot_all(
         trajectoires_xy = heads_comparaison[i]
 
         if parametrisation:
-            x_comparaison, y_comparaison, px_comparaison, py_comparaison = (
-                reparametrize(
-                    initial_x,
-                    initial_y=initial_y,
-                    t=t_comparaison,
-                    head=trajectoires_xy,
-                    initial_px=1,
-                    initial_py=0,
-                )
+            (
+                x_comparaison,
+                y_comparaison,
+                px_comparaison,
+                py_comparaison,
+            ) = reparametrize(
+                initial_x,
+                initial_y=initial_y,
+                t=t_comparaison,
+                head=trajectoires_xy,
+                initial_px=1,
+                initial_py=0,
             )
             # MSE
             mse = compute_mse(
@@ -507,9 +505,12 @@ def plot_all_TL(
         if parametrisation:
             print("Initial x is {}", initial_x)
             print("Initial y is {}", initial_y)
-            x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = (
-                reparametrize(initial_x, initial_y, t_comparaison, trajectoires_xy_TL)
-            )
+            (
+                x_comparaison_TL,
+                y_comparaison_TL,
+                px_comparaison_TL,
+                py_comparaison_TL,
+            ) = reparametrize(initial_x, initial_y, t_comparaison, trajectoires_xy_TL)
             # mse:
             mse_TL = compute_mse(
                 x_comparaison_TL,
@@ -526,9 +527,12 @@ def plot_all_TL(
             print("The mse for head {} is {}".format(i, mse_TL))
 
         elif not parametrisation:
-            x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = (
-                unpack(trajectoires_xy_TL)
-            )
+            (
+                x_comparaison_TL,
+                y_comparaison_TL,
+                px_comparaison_TL,
+                py_comparaison_TL,
+            ) = unpack(trajectoires_xy_TL)
             mse_TL = compute_mse(
                 x_comparaison_TL,
                 y_comparaison_TL,

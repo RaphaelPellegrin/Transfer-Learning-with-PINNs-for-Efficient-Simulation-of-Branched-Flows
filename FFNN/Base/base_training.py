@@ -22,15 +22,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.optim as optim
-from tqdm import trange
-
 from AD import diff
 from energy import get_current_energy
 from neural_network_architecture import NeuralNetwork
 from params import means_cell
 from plot import plot_all
 from reparametrize import reparametrize, unpack
-
+from tqdm import trange
 
 # Use GPU if possible
 if torch.cuda.is_available():
@@ -56,8 +54,8 @@ def initial_full_network_training(
     alpha_: float = 0.1,
     sigma: float = 0.1,
     initial_x: float = 0,
-    initial_px = 1,
-    initial_py = 0,
+    initial_px=1,
+    initial_py=0,
     final_t: float = 1,
     means_cell: list = means_cell,
     width_base: int = 40,
@@ -76,12 +74,12 @@ def initial_full_network_training(
 
     Args:
         random_ic:
-            whether we have random initial conditions within the possible y(0) 
-            values. Otherwise, we divide the [0,1] interval into (width_heads-1) 
+            whether we have random initial conditions within the possible y(0)
+            values. Otherwise, we divide the [0,1] interval into (width_heads-1)
             intervals and place the initial conditions for y at each end.
         parametrisation:
-            whether the output of the NN is parametrized to satisfy the boundary 
-            conditions exactly or whether that should be a component of the 
+            whether the output of the NN is parametrized to satisfy the boundary
+            conditions exactly or whether that should be a component of the
             loss.
         scale:
             used in the scheduler
@@ -219,7 +217,13 @@ def initial_full_network_training(
                 # Outputs
                 if parametrisation:
                     x, y, px, py = reparametrize(
-                        initial_x=initial_x, initial_y=initial_y, t=t, head=head, initial_px=initial_px, initial_py=initial_py)
+                        initial_x=initial_x,
+                        initial_y=initial_y,
+                        t=t,
+                        head=head,
+                        initial_px=initial_px,
+                        initial_py=initial_py,
+                    )
                 elif not parametrisation:
                     x, y, px, py = unpack(head)
                 # Derivatives
@@ -252,7 +256,7 @@ def initial_full_network_training(
                     partial_y,
                     alpha_,
                     sigma,
-                    means_cell
+                    means_cell,
                 )
 
                 ## We can finally set the energy for head l
@@ -384,8 +388,8 @@ def main(
     width_base: int = 40,
 ):
     initial_x = 0
-    initial_px=1
-    initial_py=0
+    initial_px = 1
+    initial_py = 0
     alpha_ = 0.1
     grid_size = 400
     sigma = 0.1
@@ -398,7 +402,6 @@ def main(
         optimizer_state_dict,
         total_epochs,
         initial_conditions_dictionary,
-
         d2,
         t,
         loss_record,
@@ -427,7 +430,7 @@ def main(
             "total_epochs": total_epochs,
             "initial_condition": initial_conditions_dictionary,
         },
-    "Data/model",
+        "Data/model",
     )
 
     # Saving the initial conditions
@@ -449,7 +452,7 @@ def main(
     pickle.dump(loss_record, f)
     f.close()
 
-    # here need to be able to get network_base, 
+    # here need to be able to get network_base,
     # d2 *can get with network_base and t)
     # t
     # initial_condition_dictionary

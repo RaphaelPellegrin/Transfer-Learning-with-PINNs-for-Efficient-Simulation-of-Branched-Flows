@@ -27,14 +27,14 @@ class NeuralNetwork(nn.Module):
             width_base:
                 the width of the base network
                 shared by all layers in the base
-            width_heads: 
+            width_heads:
                 the width of the heads
                 shared by all heads
-            depth_base: 
+            depth_base:
                 the depth of the base
-            number_heads: 
+            number_heads:
                 the number of heads
-            number_heads_tl: 
+            number_heads_tl:
                 the number of heads for tl (can be done in parallel)
 
         """
@@ -64,10 +64,7 @@ class NeuralNetwork(nn.Module):
         # but leaving the possibility open
         self.lout1 = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
         self.lout1.extend(
-            [
-                nn.Linear(width_heads, 4, bias=True)
-                for i in range(number_heads - 1)
-            ]
+            [nn.Linear(width_heads, 4, bias=True) for i in range(number_heads - 1)]
         )
 
         ### FOR TL
@@ -75,18 +72,12 @@ class NeuralNetwork(nn.Module):
         self.lina_TL = nn.ModuleList([nn.Linear(width_base, width_heads)])
         # extend to all heads
         self.lina_TL.extend(
-            [
-                nn.Linear(width_base, width_heads)
-                for i in range(number_heads_tl - 1)
-            ]
+            [nn.Linear(width_base, width_heads) for i in range(number_heads_tl - 1)]
         )
         # 4 outputs for x,y, p_x, p_y
         self.lout1_TL = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
         self.lout1_TL.extend(
-            [
-                nn.Linear(width_heads, 4, bias=True)
-                for i in range(number_heads_tl - 1)
-            ]
+            [nn.Linear(width_heads, 4, bias=True) for i in range(number_heads_tl - 1)]
         )
 
     def base(self, t):

@@ -16,7 +16,7 @@ def get_current_energy(
     partial_y,
     alpha_: float,
     sigma: float,
-    means_cell : list,
+    means_cell: list,
 ):
     """Updates the energy
 
@@ -55,7 +55,8 @@ def get_current_energy(
 
         # Updating the energy
         initial_energy += -alpha_ * math.exp(
-            -(1 / (2 * sigma**2)) * ((initial_x - mu_x) ** 2 + (initial_y - mu_y) ** 2)
+            -(1 / (2 * sigma**2))
+            * ((initial_x - mu_x) ** 2 + (initial_y - mu_y) ** 2)
         )
         current_energy += -alpha_ * torch.exp(
             -(1 / (2 * sigma**2)) * ((x - mu_x) ** 2 + (y - mu_y) ** 2)

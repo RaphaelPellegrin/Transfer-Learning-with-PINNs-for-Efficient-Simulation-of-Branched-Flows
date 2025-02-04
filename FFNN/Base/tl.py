@@ -26,14 +26,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.optim as optim
-from tqdm import trange
-
 from AD import diff
 from energy import get_current_energy
 from neural_network_architecture import NeuralNetwork
 from params import means_cell
 from plot import plot_all_TL
 from reparametrize import reparametrize, unpack
+from tqdm import trange
 
 # Tell it to use GPU
 
