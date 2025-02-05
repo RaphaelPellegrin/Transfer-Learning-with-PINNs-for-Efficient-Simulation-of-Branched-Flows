@@ -6,6 +6,7 @@ This is the initial phase, to train the base to be generalizable.
 
 # Imports
 import copy
+import os
 import pickle
 import random
 import time
@@ -376,7 +377,7 @@ def initial_full_network_training(
 # @click.option("ft", "final_time", default=1, help="Final time")
 # @click.option("wba", "width_base", default=40, help="Width of the base")
 def main(
-    number_of_epochs: int = 10000,
+    number_of_epochs: int = 100,
     number_of_heads: int = 11,
     final_time: float = 1,
     width_base: int = 40,
@@ -415,6 +416,9 @@ def main(
     )
 
     ### Save network2 here (to train again in the next cell) ###################
+    # Create the directory if it doesn't exist
+    os.makedirs("Data", exist_ok=True)
+
     torch.save(
         {
             "model_state_dict": network_base.state_dict(),

@@ -633,16 +633,23 @@ def compute_mse_(
     py: torch.Tensor,
     Nt,
 ) -> float:
-    """Returns the Mean Square Error (MSE) between the numerical
-    solution and the NN solution
+    """Returns the Mean Square Error (MSE).
+
+    MSE between the numerical solution and the NN solution.
 
     Args:
         trajectoires_xy:
-        x
-        y
-        px
-        py
+            trajectoires xy
+        x:
+            x
+        y:
+            y
+        px:
+            px
+        py:
+            py
         Nt:
+            Nt
 
     """
     # mse:
@@ -658,6 +665,30 @@ def compute_mse_(
 
 # MSE
 def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
+    """Computes the Mean Square Error (MSE).
+
+    MSE between the numerical solution and the NN solution.
+
+    Args:
+        x_:
+            x_
+        y_:
+            y_
+        px_:
+            px_
+        py_:
+            py_
+        x:
+            x
+        y:
+            y
+        px:
+            px
+        py:
+            py
+        Nt:
+            Nt
+    """
     # mse:
     mse = ((x_.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))) ** 2).mean() + (
         (y_.cpu().detach().reshape((-1, 1)) - y.reshape((-1, 1))) ** 2
@@ -671,6 +702,14 @@ def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
 
 # Boundaries of plot
 def update_min_max(x, y):
+    """Updates the minimum and maximum values of x and y.
+
+    Args:
+        x:
+            x
+        y:
+            y
+    """
     if x[-1] > maximum_x:
         maximum_x = x[-1]
     if x[-1] < min_final:
