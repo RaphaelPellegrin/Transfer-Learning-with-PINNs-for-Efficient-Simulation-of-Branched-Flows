@@ -266,27 +266,27 @@ def initial_full_network_training(
                 if parametrisation:
                     l5 = 0
                     l6 = 0
-                    L7 = 0
-                    L8 = 0
+                    l7 = 0
+                    l8 = 0
                 elif not parametrisation:
                     l5 = (x[0, 0] - initial_x) ** 2
                     l6 = (y[0, 0] - initial_y) ** 2
                     ## Velocity
-                    L7 = (px[0, 0] - initial_px) ** 2
-                    L8 = (py[0, 0] - initial_py) ** 2
+                    l7 = (px[0, 0] - initial_px) ** 2
+                    l8 = (py[0, 0] - initial_py) ** 2
 
                 # Could add the penalty that H is constant l9
                 l9 = ((H_0 - H_curr) ** 2).mean()
                 if not energy_conservation:
                     # total loss
-                    loss += l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8
+                    loss += l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8
                     # loss for current head
-                    lossl_val = l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8
+                    lossl_val = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8
                 if energy_conservation:
                     # total loss
-                    loss += l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8 + l9
+                    loss += l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9
                     # loss for current head
-                    lossl_val = l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8 + l9
+                    lossl_val = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9
 
                 # the loss for head l at epoch ne is stored
                 losses_each_head[l][ne] = lossl_val

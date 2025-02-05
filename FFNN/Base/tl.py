@@ -314,25 +314,25 @@ def perform_transfer_learning(
                 if parametrisation:
                     l5_tl = 0
                     l6_tl = 0
-                    L7_tl = 0
-                    L8_tl = 0
+                    l7_tl = 0
+                    l8_tl = 0
                 elif not parametrisation:
                     l5_tl = ((x_tl[0, 0] - initial_x) ** 2) * tl_weighting
                     l6_tl = (y_tl[0, 0] - initial_y_tl) ** 2
                     ## Velocity
-                    L7_tl = (px_tl[0, 0] - initial_px) ** 2
-                    L8_tl = (py_tl[0, 0] - initial_py) ** 2
+                    l7_tl = (px_tl[0, 0] - initial_px) ** 2
+                    l8_tl = (py_tl[0, 0] - initial_py) ** 2
 
                 # Could add the penalty that H is constant l9
                 l9_tl = ((H_0_tl - H_curr_tl) ** 2).mean()
                 if not energy_conservation:
                     # total loss
                     loss_tl += (
-                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + l6_tl + L7_tl + L8_tl
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + l6_tl + l7_tl + l8_tl
                     )
                     # loss for current head
                     lossl_val_tl = (
-                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + l6_tl + L7_tl + L8_tl
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + l6_tl + l7_tl + l8_tl
                     )
                 if energy_conservation:
                     # total loss
@@ -343,8 +343,8 @@ def perform_transfer_learning(
                         + l4_tl
                         + l5_tl
                         + l6_tl
-                        + L7_tl
-                        + L8_tl
+                        + l7_tl
+                        + l8_tl
                         + energy_tl_weight * l9_tl
                     )
                     # loss for current head
@@ -355,7 +355,7 @@ def perform_transfer_learning(
                         + l4_tl
                         + l5_tl
                         + l6_tl
-                        + L7_tl
+                        + l7_tl
                         + energy_tl_weight * l9_tl
                     )
 
