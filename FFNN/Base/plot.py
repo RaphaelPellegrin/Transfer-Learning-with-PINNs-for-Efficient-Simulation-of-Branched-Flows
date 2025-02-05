@@ -376,7 +376,7 @@ def plot_all(
 # does not plot the diff in x and y. If that's the case
 # get rid of this function and add an argument:
 # plot the diff: yes or no. That would get rid of 150+ lines of code.
-def plot_all_TL(
+def plot_all_tl(
     number_of_epochs: int,
     number_of_heads: int,
     loss_record: np.ndarray,
@@ -472,8 +472,8 @@ def plot_all_TL(
     # we need to have the points at the same time
     # Set our tensor of times
     # t_comparaison=torch.linspace(0,final_t,Nt,requires_grad=True).reshape(-1,1)
-    x_base_comparaison_TL = network_trained.base(t_comparaison)
-    heads_TL = network_trained.forward_tl(x_base_comparaison_TL)
+    x_base_comparaison_tl = network_trained.base(t_comparaison)
+    heads_tl = network_trained.forward_tl(x_base_comparaison_tl)
 
     # Initial positon and velocity
     x0, px0, py0 = 0, 1, 0.0
@@ -498,29 +498,29 @@ def plot_all_TL(
             alpha_=alpha_,
         )
         # maximum_x, min_final, minimum_y, maximum_y  = update_min_max(x, y)
-        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl="_TL")
+        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl="_tl")
 
         ax[1].plot(x, y, "g", linestyle=":", linewidth=line_w)
 
         # Comparaison
         # Get head m
-        trajectoires_xy_tl = heads_TL[i]
+        trajectoires_xy_tl = heads_tl[i]
 
         if parametrisation:
             print("Initial x is {}", initial_x)
             print("Initial y is {}", initial_y)
             (
                 x_comparaison_tl,
-                y_comparaison_TL,
+                y_comparaison_tl,
                 px_comparaison_tl,
-                py_comparaison_TL,
+                py_comparaison_tl,
             ) = reparametrize(initial_x, initial_y, t_comparaison, trajectoires_xy_tl)
             # mse:
-            mse_TL = compute_mse(
+            mse_tl = compute_mse(
                 x_comparaison_tl,
-                y_comparaison_TL,
+                y_comparaison_tl,
                 px_comparaison_tl,
-                py_comparaison_TL,
+                py_comparaison_tl,
                 x,
                 y,
                 px,
@@ -528,20 +528,20 @@ def plot_all_TL(
                 Nt,
             )
             # Should probably do a dict that saves them / save them to a file for the cluster
-            print("The mse for head {} is {}".format(i, mse_TL))
+            print("The mse for head {} is {}".format(i, mse_tl))
 
         elif not parametrisation:
             (
                 x_comparaison_tl,
-                y_comparaison_TL,
+                y_comparaison_tl,
                 px_comparaison_tl,
-                py_comparaison_TL,
+                py_comparaison_tl,
             ) = unpack(trajectoires_xy_tl)
-            mse_TL = compute_mse(
+            mse_tl = compute_mse(
                 x_comparaison_tl,
-                y_comparaison_TL,
+                y_comparaison_tl,
                 px_comparaison_tl,
-                py_comparaison_TL,
+                py_comparaison_tl,
                 x,
                 y,
                 px,
@@ -549,7 +549,7 @@ def plot_all_TL(
                 Nt,
             )
             # Should probably do a dict that saves them / save them to a file for the cluster
-            print("The mse (TL) for head {} is {}".format(i, mse_TL))
+            print("The mse (TL) for head {} is {}".format(i, mse_tl))
             # Is there a way to print it for every epoch like Blake? Yes, but more expensive. I
             # think Blake should also actually consider not computing it for every epoch
             # much more efficient
@@ -564,18 +564,18 @@ def plot_all_TL(
         )
         ax[2].set_title("Energy (TL)")
 
-        H_curr_comparaison_TL = (px_comparaison_tl**2 + py_comparaison_TL**2) / 2
+        H_curr_comparaison_tl = (px_comparaison_tl**2 + py_comparaison_tl**2) / 2
         for m in range(len(means_of_gaussian)):
             # Get the current means_of_gaussian
             mu_x = means_of_gaussian[m][0]
             mu_y = means_of_gaussian[m][1]
 
             # Updating the energy
-            H_curr_comparaison_TL += -alpha_ * torch.exp(
+            H_curr_comparaison_tl += -alpha_ * torch.exp(
                 -(1 / (2 * sigma**2))
-                * ((x_comparaison_tl - mu_x) ** 2 + (y_comparaison_TL - mu_y) ** 2)
+                * ((x_comparaison_tl - mu_x) ** 2 + (y_comparaison_tl - mu_y) ** 2)
             )
-        ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_TL.cpu().detach())
+        ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_tl.cpu().detach())
 
     print("For TL, we had {} head".format(number_of_heads))
     x1, y1, potential_grid_values = potential_grid(
@@ -585,7 +585,7 @@ def plot_all_TL(
     ax[1].contourf(x1, y1, potential_grid_values, levels=20, cmap="Reds_r")
     ax[1].set_xlim(-0.1, 1.1)
 
-    filename_fig = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_TRAJECTORIES_TL.png"
+    filename_fig = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_TRAJECTORIES_tl.png"
     plt.savefig(filename_fig)
 
 

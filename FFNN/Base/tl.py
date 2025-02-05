@@ -30,7 +30,7 @@ from AD import diff
 from energy import get_current_energy
 from neural_network_architecture import NeuralNetwork
 from params import means_of_gaussian
-from plot import plot_all_TL
+from plot import plot_all_tl
 from reparametrize import reparametrize, unpack
 from tqdm import trange
 
@@ -111,7 +111,7 @@ def perform_transfer_learning(
             the width of the base
         number_of_epochs:
             the number of epochs we train the NN for
-        number_of_epochs_TL:
+        number_of_epochs_tl:
             the number of epochs we train the NN for the TL
 
 
@@ -154,9 +154,9 @@ def perform_transfer_learning(
     t = torch.linspace(0, final_t, grid_size, requires_grad=True).reshape(-1, 1)
 
     # For comparaison
-    temp_loss_TL = np.inf
+    temp_loss_tl = np.inf
 
-    loss_record_TL: np.ndarray = np.zeros(num_epochs_tl)
+    loss_record_tl: np.ndarray = np.zeros(num_epochs_tl)
 
     ## LOADING WEIGHTS PART if path_saving_tl_model file exists and loadWeights=True
     print("We load the previous model for transfer learning")
@@ -192,36 +192,36 @@ def perform_transfer_learning(
     # Dictionary for the initial conditions
     initial_conditions_tl_dictionary: dict = {}
     # Dictionary for the initial energy for each initial conditions
-    H0_init_TL: dict = {}
+    H0_init_tl: dict = {}
 
     if not specify_initial_condition:
         for j in range(number_of_heads_tl):
             # Initial conditions
-            initial_condition_TL = random.randint(0, 100) / 100
+            initial_condition_tl = random.randint(0, 100) / 100
             print(
                 "The initial condition (for y) for TL is {}".format(
-                    initial_condition_TL
+                    initial_condition_tl
                 )
             )
-            initial_conditions_tl_dictionary[j] = initial_condition_TL
+            initial_conditions_tl_dictionary[j] = initial_condition_tl
     else:
         for j in range(number_of_heads_tl):
             # Initial conditions
-            initial_condition_TL = init_specified[j]
+            initial_condition_tl = init_specified[j]
             print(
                 "The initial condition (for y) for TL is {}".format(
-                    initial_condition_TL
+                    initial_condition_tl
                 )
             )
-            initial_conditions_tl_dictionary[j] = initial_condition_TL
+            initial_conditions_tl_dictionary[j] = initial_condition_tl
 
     # Keep track of the number of epochs
-    total_epochs_TL: int = 0
+    total_epochs_tl: int = 0
 
     # Dictionary keeping track of the loss for each head
-    losses_each_head_TL: dict = {}
+    losses_each_head_tl: dict = {}
     for k in range(number_of_heads_tl):
-        losses_each_head_TL[k] = np.zeros(num_epochs_tl)
+        losses_each_head_tl[k] = np.zeros(num_epochs_tl)
 
     # For every epoch...
 
@@ -231,9 +231,9 @@ def perform_transfer_learning(
 
     optimizer50.zero_grad()
 
-    with trange(num_epochs_tl) as tepoch_TL:
-        for ne in tepoch_TL:
-            tepoch_TL.set_description(f"Epoch {ne}")
+    with trange(num_epochs_tl) as tepoch_tl:
+        for ne in tepoch_tl:
+            tepoch_tl.set_description(f"Epoch {ne}")
             if ne > 0:
                 optimizer50.zero_grad()
 
@@ -241,71 +241,71 @@ def perform_transfer_learning(
             # this can actually be pre-computed and passed in directly to be faster
             # It is frozen so it does not need to be trained
             # TODO
-            x_base_TL = network50.base(t)
-            d_TL = network50.forward_tl(x_base_TL)
+            x_base_tl = network50.base(t)
+            d_tl = network50.forward_tl(x_base_tl)
 
             # loss
-            loss_TL: float = 0
+            loss_tl: float = 0
             # for saving the best loss (of individual heads)
-            losses_part_current_TL = {}
+            losses_part_current_tl = {}
 
             # For each head...
             for l in range(number_of_heads_tl):
                 # Get the current head
-                head_TL = d_TL[l]
+                head_tl = d_tl[l]
                 # Get the corresponding initial condition
-                initial_y_TL = initial_conditions_tl_dictionary[l]
+                initial_y_tl = initial_conditions_tl_dictionary[l]
 
                 # Outputs
                 if parametrisation:
-                    x_TL, y_TL, px_TL, py_TL = reparametrize(
+                    x_tl, y_tl, px_tl, py_tl = reparametrize(
                         initial_x=initial_x,
-                        initial_y=initial_y_TL,
+                        initial_y=initial_y_tl,
                         t=t,
-                        head=head_TL,
+                        head=head_tl,
                         initial_px=1,
                         initial_py=0,
                     )
                 elif not parametrisation:
-                    x_TL, y_TL, px_TL, py_TL = unpack(head_TL)
+                    x_tl, y_tl, px_tl, py_tl = unpack(head_tl)
 
                 # Derivatives
-                x_dot_TL = diff(x_TL, t, 1)
-                y_dot_TL = diff(y_TL, t, 1)
-                px_dot_TL = diff(px_TL, t, 1)
-                py_dot_TL = diff(py_TL, t, 1)
+                x_dot_tl = diff(x_tl, t, 1)
+                y_dot_tl = diff(y_tl, t, 1)
+                px_dot_tl = diff(px_tl, t, 1)
+                py_dot_tl = diff(py_tl, t, 1)
 
                 # Loss
-                l1_tl = ((x_dot_TL - px_TL) ** 2).mean()
-                l2_tl = ((y_dot_TL - py_TL) ** 2).mean()
+                l1_tl = ((x_dot_tl - px_tl) ** 2).mean()
+                l2_tl = ((y_dot_tl - py_tl) ** 2).mean()
 
                 # For the other components of the loss, we need the potential V
                 # and its derivatives
                 ## Partial derivatives of the potential (updated below)
-                partial_x_TL = 0
-                partial_y_TL = 0
+                partial_x_tl = 0
+                partial_y_tl = 0
 
                 ## Energy at the initial time (updated below)
-                H_0_TL, H_curr_TL, partial_x_TL, partial_y_TL = get_current_energy(
+                H_0_tl, H_curr_tl, partial_x_tl, partial_y_tl = get_current_energy(
                     initial_x,
-                    initial_y_TL,
-                    x_TL,
-                    y_TL,
-                    px_TL,
-                    py_TL,
-                    partial_x_TL,
-                    partial_y_TL,
+                    initial_y_tl,
+                    x_tl,
+                    y_tl,
+                    px_tl,
+                    py_tl,
+                    partial_x_tl,
+                    partial_y_tl,
                     alpha_=alpha_,
                     sigma=sigma,
                     means_of_gaussian=means_of_gaussian,
                 )
 
                 ## We can finally set the energy for head l
-                H0_init_TL[l] = H_0_TL
+                H0_init_tl[l] = H_0_tl
 
                 # Other components of the loss
-                l3_tl = ((px_dot_TL + partial_x_TL) ** 2).mean()
-                l4_tl = ((py_dot_TL + partial_y_TL) ** 2).mean()
+                l3_tl = ((px_dot_tl + partial_x_tl) ** 2).mean()
+                l4_tl = ((py_dot_tl + partial_y_tl) ** 2).mean()
 
                 # Nota Bene: L1,L2,L3 and L4 are Hamilton's equations
 
@@ -313,60 +313,60 @@ def perform_transfer_learning(
                 ## Position
                 if parametrisation:
                     l5_tl = 0
-                    L6_TL = 0
-                    L7_TL = 0
-                    L8_TL = 0
+                    L6_tl = 0
+                    L7_tl = 0
+                    L8_tl = 0
                 elif not parametrisation:
-                    l5_tl = ((x_TL[0, 0] - initial_x) ** 2) * tl_weighting
-                    L6_TL = (y_TL[0, 0] - initial_y_TL) ** 2
+                    l5_tl = ((x_tl[0, 0] - initial_x) ** 2) * tl_weighting
+                    L6_tl = (y_tl[0, 0] - initial_y_tl) ** 2
                     ## Velocity
-                    L7_TL = (px_TL[0, 0] - initial_px) ** 2
-                    L8_TL = (py_TL[0, 0] - initial_py) ** 2
+                    L7_tl = (px_tl[0, 0] - initial_px) ** 2
+                    L8_tl = (py_tl[0, 0] - initial_py) ** 2
 
                 # Could add the penalty that H is constant L9
-                L9_TL = ((H_0_TL - H_curr_TL) ** 2).mean()
+                L9_tl = ((H_0_tl - H_curr_tl) ** 2).mean()
                 if not energy_conservation:
                     # total loss
-                    loss_TL += (
-                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_TL + L7_TL + L8_TL
+                    loss_tl += (
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_tl + L7_tl + L8_tl
                     )
                     # loss for current head
-                    lossl_val_TL = (
-                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_TL + L7_TL + L8_TL
+                    lossl_val_tl = (
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_tl + L7_tl + L8_tl
                     )
                 if energy_conservation:
                     # total loss
-                    loss_TL += (
+                    loss_tl += (
                         l1_tl
                         + l2_tl
                         + l3_tl
                         + l4_tl
                         + l5_tl
-                        + L6_TL
-                        + L7_TL
-                        + L8_TL
-                        + energy_tl_weight * L9_TL
+                        + L6_tl
+                        + L7_tl
+                        + L8_tl
+                        + energy_tl_weight * L9_tl
                     )
                     # loss for current head
-                    lossl_val_TL = (
+                    lossl_val_tl = (
                         l1_tl
                         + l2_tl
                         + l3_tl
                         + l4_tl
                         + l5_tl
-                        + L6_TL
-                        + L7_TL
-                        + energy_tl_weight * L9_TL
+                        + L6_tl
+                        + L7_tl
+                        + energy_tl_weight * L9_tl
                     )
 
                 # the loss for head l at epoch ne is stored
-                losses_each_head_TL[l][ne] = lossl_val_TL
+                losses_each_head_tl[l][ne] = lossl_val_tl
 
                 # the loss for head l
-                losses_part_current_TL[l] = lossl_val_TL
+                losses_part_current_tl[l] = lossl_val_tl
 
             # Backward
-            loss_TL.backward(retain_graph=True)
+            loss_tl.backward(retain_graph=True)
 
             # Here we perform clipping
             # (source: https://stackoverflow.com/questions/54716377/how-to-do-gradient-clipping-in-pytorch)
@@ -378,44 +378,44 @@ def perform_transfer_learning(
 
             optimizer50.step()
             scheduler.step()
-            tepoch_TL.set_postfix(loss=loss_TL.item())
+            tepoch_tl.set_postfix(loss=loss_tl.item())
 
             # the loss at epoch ne is stored
-            # print("Updating the loss", loss_TL.item())
-            loss_record_TL[ne] = loss_TL.item()
+            # print("Updating the loss", loss_tl.item())
+            loss_record_tl[ne] = loss_tl.item()
 
             # If it is the best loss so far, we update the best loss and saved the model
-            if loss_TL.item() < temp_loss_TL:
-                epoch_mini_TL = ne + total_epochs_TL
-                network2_TL = copy.deepcopy(network50)
-                temp_loss_TL = loss_TL.item()
-                individual_losses_saved_TL = losses_part_current_TL
+            if loss_tl.item() < temp_loss_tl:
+                epoch_mini_tl = ne + total_epochs_tl
+                network2_tl = copy.deepcopy(network50)
+                temp_loss_tl = loss_tl.item()
+                individual_losses_saved_tl = losses_part_current_tl
 
     try:
         print(
             "The best loss (for TL) we achieved was:",
-            temp_loss_TL,
+            temp_loss_tl,
             "at epoch",
-            epoch_mini_TL,
+            epoch_mini_tl,
         )
     except UnboundLocalError:
         print("Increase number of epochs")
 
-    maxi_indi_TL = 0
+    maxi_indi_tl = 0
     for g in range(number_of_heads_tl):
-        if individual_losses_saved_TL[g] > maxi_indi_TL:
-            maxi_indi_TL = individual_losses_saved_TL[g]
-    print("The maximum of the individual losses (for TL) was {}".format(maxi_indi_TL))
-    total_epochs_TL += num_epochs_tl
+        if individual_losses_saved_tl[g] > maxi_indi_tl:
+            maxi_indi_tl = individual_losses_saved_tl[g]
+    print("The maximum of the individual losses (for TL) was {}".format(maxi_indi_tl))
+    total_epochs_tl += num_epochs_tl
 
-    ### Save network2_TL here (to train again in the next cell) ################
+    ### Save network2_tl here (to train again in the next cell) ################
     torch.save(
         {
-            "model_state_dict": network2_TL.state_dict(),
-            "loss": temp_loss_TL,
-            "epoch": epoch_mini_TL,
+            "model_state_dict": network2_tl.state_dict(),
+            "loss": temp_loss_tl,
+            "epoch": epoch_mini_tl,
             "optimizer_state_dict": optimizer50.state_dict(),
-            "total_epochs": total_epochs_TL,
+            "total_epochs": total_epochs_tl,
             "initial_condition": initial_conditions_tl_dictionary,
         },
         path_saving_tl_model,
@@ -423,28 +423,28 @@ def perform_transfer_learning(
     # Saving the network
     filename = f"TL/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_tl)}_grid_size_{str(grid_size)}_Network_state_Tl.p"
     f = open(filename, "wb")
-    pickle.dump(network2_TL.state_dict(), f)
+    pickle.dump(network2_tl.state_dict(), f)
     f.close()
 
     # Forward pass (network2 is the best network now)
-    x_base_TL2 = network2_TL.base(t)
-    d2_TL = network2_TL.forward_tl(x_base_TL2)
+    x_base_tl2 = network2_tl.base(t)
+    d2_tl = network2_tl.forward_tl(x_base_tl2)
 
     initial_y = initial_conditions_tl_dictionary[0]
     # Saving the loss
     filename = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_tl)}_grid_size_{str(grid_size)}_lossTL.p"
     f = open(filename, "wb")
-    pickle.dump(loss_record_TL, f)
+    pickle.dump(loss_record_tl, f)
     f.close()
 
     return (
-        network2_TL,
-        d2_TL,
+        network2_tl,
+        d2_tl,
         t,
-        loss_record_TL,
-        losses_each_head_TL,
+        loss_record_tl,
+        losses_each_head_tl,
         initial_conditions_tl_dictionary,
-        H0_init_TL,
+        H0_init_tl,
     )
 
 
@@ -485,13 +485,13 @@ def main(
     )
 
     (
-        network2_TL,
-        d2_TL,
+        network2_tl,
+        d2_tl,
         t,
-        loss_record_TL,
-        losses_each_head_TL,
+        loss_record_tl,
+        losses_each_head_tl,
         initial_conditions_tl_dictionary,
-        H0_init_TL,
+        H0_init_tl,
     ) = perform_transfer_learning(
         network_base,
         specify_initial_condition=True,
@@ -511,13 +511,13 @@ def main(
         energy_conservation=True,
     )
 
-    plot_all_TL(
+    plot_all_tl(
         number_of_epochs=num_epochs_tl,
         number_of_heads=number_of_heads_tl,
-        loss_record=loss_record_TL,
-        losses_each_head=losses_each_head_TL,
-        network_trained=network2_TL,
-        d2=d2_TL,
+        loss_record=loss_record_tl,
+        losses_each_head=losses_each_head_tl,
+        network_trained=network2_tl,
+        d2=d2_tl,
         parametrisation=parametrisation,
         initial_conditions_dictionary=initial_conditions_tl_dictionary,
         initial_x=initial_x,
@@ -526,7 +526,7 @@ def main(
         alpha_=alpha_,
         grid_size=grid_size,
         sigma=sigma,
-        H0_init=H0_init_TL,
+        H0_init=H0_init_tl,
         times_t=t,
         print_legend=True,
     )
