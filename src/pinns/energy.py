@@ -1,4 +1,4 @@
-"""Module for energy conservation"""
+"""Module for energy conservation."""
 
 import math
 
@@ -8,41 +8,48 @@ import torch
 def get_current_energy(
     initial_x: float,
     initial_y: float,
-    x,
-    y,
-    px,
-    py,
-    partial_x,
-    partial_y,
+    x: torch.Tensor,
+    y: torch.Tensor,
+    px: torch.Tensor,
+    py: torch.Tensor,
+    partial_x: torch.Tensor,
+    partial_y: torch.Tensor,
     alpha_: float,
     sigma: float,
-    means_cell : list,
-):
-    """Updates the energy
+    means_of_gaussian: list,
+) -> tuple[float, float, float, float]:
+    """Updates the energy.
 
     Args:
         initial_x:
             inital value for x(0)
         initial_y:
+            initial value for y(0)
         x:
+            current value for x
         y:
+            current value for y
         px:
+            current value for px
         py:
+            current value for py
         partial_x:
+            current value for partial_x
         partial_y:
+            current value for partial_y
         alpha_:
             constant to scale the potential
         sigma:
             used when constructing the potential. Std of the Gaussian (shared)
 
     """
-    initial_energy = 1 / 2
-    current_energy = (px**2 + py**2) / 2
+    initial_energy: float = 1 / 2
+    current_energy: float = (px**2 + py**2) / 2
 
-    for i in range(len(means_cell)):
-        # Get the current means_cell
-        mu_x = means_cell[i][0]
-        mu_y = means_cell[i][1]
+    for i in range(len(means_of_gaussian)):
+        # Get the current means_of_gaussian
+        mu_x = means_of_gaussian[i][0]
+        mu_y = means_of_gaussian[i][1]
 
         # Building the potential and updating the partial derivatives
         potential = -alpha_ * torch.exp(

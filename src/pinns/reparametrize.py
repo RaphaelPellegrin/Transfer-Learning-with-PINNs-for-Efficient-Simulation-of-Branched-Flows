@@ -1,6 +1,6 @@
-"""Functions used to reparametrize NN outputs
+"""Functions used to reparametrize NN outputs.
 
-We use the reparametrisation from Mattheakis et al. 
+We use the reparametrisation from Mattheakis et al.
 THe idea is to satisfy the IC exactly when t=0,
 and decay the constraint exponentially in t.
 
@@ -10,9 +10,14 @@ import torch
 
 
 def reparametrize(
-    initial_x, initial_y, t, head, initial_px=1, initial_py=0
+    initial_x: torch.Tensor,
+    initial_y: torch.Tensor,
+    t: torch.Tensor,
+    head: torch.Tensor,
+    initial_px: float = 1,
+    initial_py: float = 0,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Reparametrizes NN output to satisfy inital/boundary conditions
+    """Reparametrizes NN output to satisfy inital/boundary conditions.
 
     Args:
         initial_x:
@@ -36,7 +41,8 @@ def reparametrize(
 
 
 def unpack(head) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Used when we do not reparametrise
+    """Used when we do not reparametrise.
+
     Args:
         head:
             head to unpack

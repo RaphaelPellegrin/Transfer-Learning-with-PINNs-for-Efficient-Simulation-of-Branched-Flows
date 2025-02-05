@@ -1,4 +1,4 @@
-"""Module for plotting functions
+"""Module for plotting functions.
 
 THe plotting function below plots:
 the energy, the losses, the trajectories
@@ -10,13 +10,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from neural_network_architecture import NeuralNetwork
-from numerical_integrators import numerical_integrator
-from params import means_cell
-from reparametrize import reparametrize, unpack
+from pinns.neural_network_architecture import NeuralNetwork
+from pinns.numerical_integrators import numerical_integrator
+from pinns.params import means_of_gaussian
+from pinns.reparametrize import reparametrize, unpack
 
-lineW: int = 3
-lineBoxW: int = 2
+line_w: int = 3
+line_box_w: int = 2
 font: dict = {"size": 24}
 plt.rc("font", **font)
 
@@ -25,10 +25,10 @@ def potential_grid(
     initial_x: float,
     final_t: float,
     alpha_: float,
-    means_cell: list = means_cell,
+    means_of_gaussian: list = means_of_gaussian,
     sigma: float = 0.1,
 ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
-    """Makes a grid with the potential value
+    """Makes a grid with the potential value.
 
     Args:
         initial_x:
@@ -37,7 +37,7 @@ def potential_grid(
             final time t
         alpha_:
             constant to scale the potential
-        means_cell:
+        means_of_gaussian:
             means of the Gaussians used in making the potential
         sigma:
             used when constructing the potential. Std of the Gaussian (shared)
@@ -50,16 +50,14 @@ def potential_grid(
     y: np.ndarray
     x, y = np.meshgrid(x1, y1)
 
-    # Saving the means_cell passed in
-    filename: str = f"Data/Means.p"
+    # Saving the means_of_gaussian passed in
+    filename: str = "Data/Means.p"
     f = open(filename, "wb")
-    pickle.dump(means_cell, f)
+    pickle.dump(means_of_gaussian, f)
     f.close()
 
     # Saving the mesh grid
-    filename: str = (
-        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
-    )
+    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
     f = open(filename, "wb")
     pickle.dump(x, f)
     pickle.dump(y, f)
@@ -67,7 +65,7 @@ def potential_grid(
 
     potential_grid_values = 0
 
-    for i in means_cell:
+    for i in means_of_gaussian:
         mu_x1 = i[0]
         mu_y1 = i[1]
         potential_grid_values += -alpha_ * np.exp(
@@ -75,9 +73,7 @@ def potential_grid(
         )
 
     # Saving the values of potential_grid_values on the grid
-    filename: str = (
-        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
-    )
+    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
     f = open(filename, "wb")
     pickle.dump(potential_grid_values, f)
     f.close()
@@ -100,12 +96,12 @@ def plot_all(
     alpha_: float,
     grid_size: int,
     sigma: float,
-    H0_init,
+    h0_init,
     times_t,
     print_legend: bool = True,
     tl: str = "",  # for TL
 ) -> None:
-    """Plots the trajectories
+    """Plots the trajectories.
 
     Args:
         number_of_epochs:
@@ -129,7 +125,7 @@ def plot_all(
             the number of random points (time) used in training
         sigma:
             used when constructing the potential. Std of the Gaussian (shared)
-        H0_init:
+        h0_init:
         times_t:
         print_legend:
         tl:
@@ -226,34 +222,37 @@ def plot_all(
         print("The initial condition used is", initial_conditions_dictionary[i])
         initial_y = initial_conditions_dictionary[i]
         x, y, px, py = numerical_integrator(
-            t=t,
+            t,
             x0=x0,
             y0=initial_conditions_dictionary[i],
             px0=px0,
             py0=py0,
-            means_gaussian=means_cell,
+            means_gaussian=means_of_gaussian,
             sigma=sigma,
             alpha_=alpha_,
         )
         # maximum_x, min_final, minimum_y, maximum_y  = update_min_max(x, y)
 
         save_file_numerical(x, y, px, py, initial_x, final_t, alpha_)
-        ax[0].plot(x, y, "g", linestyle=":", linewidth=lineW)
+        ax[0].plot(x, y, "g", linestyle=":", linewidth=line_w)
 
         # Comparaison
         # Get head m
         trajectoires_xy = heads_comparaison[i]
 
         if parametrisation:
-            x_comparaison, y_comparaison, px_comparaison, py_comparaison = (
-                reparametrize(
-                    initial_x,
-                    initial_y=initial_y,
-                    t=t_comparaison,
-                    head=trajectoires_xy,
-                    initial_px=1,
-                    initial_py=0,
-                )
+            (
+                x_comparaison,
+                y_comparaison,
+                px_comparaison,
+                py_comparaison,
+            ) = reparametrize(
+                initial_x,
+                initial_y=initial_y,
+                t=t_comparaison,
+                head=trajectoires_xy,
+                initial_px=1,
+                initial_py=0,
             )
             # MSE
             mse = compute_mse(
@@ -310,20 +309,20 @@ def plot_all(
             )
 
         # Theoretical energy
-        print("The theoretical energy is {}".format(H0_init[i]))
+        print("The theoretical energy is {}".format(h0_init[i]))
         ax[4].plot(
             t_comparaison.cpu().detach(),
-            H0_init[i] * np.ones(Nt),
+            h0_init[i] * np.ones(Nt),
             linestyle=":",
             c="r",
         )
         ax[4].set_title("Energy")
 
         H_curr_comparaison = (px_comparaison**2 + py_comparaison**2) / 2
-        for m in range(len(means_cell)):
-            # Get the current means_cell
-            mu_x = means_cell[m][0]
-            mu_y = means_cell[m][1]
+        for m in range(len(means_of_gaussian)):
+            # Get the current means_of_gaussian
+            mu_x = means_of_gaussian[m][0]
+            mu_y = means_of_gaussian[m][1]
 
             # Updating the energy
             H_curr_comparaison += -alpha_ * torch.exp(
@@ -333,7 +332,7 @@ def plot_all(
         ax[4].plot(t_comparaison.cpu().detach(), H_curr_comparaison.cpu().detach())
 
     x1, y1, potential_grid_values = potential_grid(
-        initial_x, final_t, alpha_, means_cell, sigma
+        initial_x, final_t, alpha_, means_of_gaussian, sigma
     )
     ax[0].contourf(x1, y1, potential_grid_values, levels=20, cmap="Reds_r")
 
@@ -374,7 +373,7 @@ def plot_all(
 # does not plot the diff in x and y. If that's the case
 # get rid of this function and add an argument:
 # plot the diff: yes or no. That would get rid of 150+ lines of code.
-def plot_all_TL(
+def plot_all_tl(
     number_of_epochs: int,
     number_of_heads: int,
     loss_record: np.ndarray,
@@ -389,10 +388,49 @@ def plot_all_TL(
     alpha_: float,
     grid_size: int,
     sigma: float,
-    H0_init,
+    h0_init,
     times_t,
     print_legend: bool = True,
 ) -> None:
+    """Plots the trajectories.
+
+    Args:
+        number_of_epochs:
+            number of epochs
+        number_of_heads:
+            number of heads
+        loss_record:
+            loss record
+        losses_each_head:
+            losses each head
+        network_trained:
+            network trained
+        d2:
+            d2
+        parametrisation:
+            parametrisation
+        initial_conditions_dictionary:
+            initial conditions dictionary
+        initial_x:
+            initial x
+        final_t:
+            final t
+        width_base:
+            width base
+        alpha_:
+            alpha
+        grid_size:
+            grid size
+        sigma:
+            sigma
+        h0_init:
+            h0 init
+        times_t:
+            times t
+        print_legend:
+            print legend
+
+    """
     # Create a figure
     f, ax = plt.subplots(3, 1, figsize=(20, 80))
 
@@ -470,8 +508,8 @@ def plot_all_TL(
     # we need to have the points at the same time
     # Set our tensor of times
     # t_comparaison=torch.linspace(0,final_t,Nt,requires_grad=True).reshape(-1,1)
-    x_base_comparaison_TL = network_trained.base(t_comparaison)
-    heads_TL = network_trained.forward_TL(x_base_comparaison_TL)
+    x_base_comparaison_tl = network_trained.base(t_comparaison)
+    heads_tl = network_trained.forward_tl(x_base_comparaison_tl)
 
     # Initial positon and velocity
     x0, px0, py0 = 0, 1, 0.0
@@ -491,31 +529,34 @@ def plot_all_TL(
             initial_conditions_dictionary[i],
             px0,
             py0,
-            means_cell,
+            means_of_gaussian,
             sigma=sigma,
             alpha_=alpha_,
         )
         # maximum_x, min_final, minimum_y, maximum_y  = update_min_max(x, y)
-        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl="_TL")
+        save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl="_tl")
 
-        ax[1].plot(x, y, "g", linestyle=":", linewidth=lineW)
+        ax[1].plot(x, y, "g", linestyle=":", linewidth=line_w)
 
         # Comparaison
         # Get head m
-        trajectoires_xy_TL = heads_TL[i]
+        trajectoires_xy_tl = heads_tl[i]
 
         if parametrisation:
             print("Initial x is {}", initial_x)
             print("Initial y is {}", initial_y)
-            x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = (
-                reparametrize(initial_x, initial_y, t_comparaison, trajectoires_xy_TL)
-            )
+            (
+                x_comparaison_tl,
+                y_comparaison_tl,
+                px_comparaison_tl,
+                py_comparaison_tl,
+            ) = reparametrize(initial_x, initial_y, t_comparaison, trajectoires_xy_tl)
             # mse:
-            mse_TL = compute_mse(
-                x_comparaison_TL,
-                y_comparaison_TL,
-                px_comparaison_TL,
-                py_comparaison_TL,
+            mse_tl = compute_mse(
+                x_comparaison_tl,
+                y_comparaison_tl,
+                px_comparaison_tl,
+                py_comparaison_tl,
                 x,
                 y,
                 px,
@@ -523,17 +564,20 @@ def plot_all_TL(
                 Nt,
             )
             # Should probably do a dict that saves them / save them to a file for the cluster
-            print("The mse for head {} is {}".format(i, mse_TL))
+            print("The mse for head {} is {}".format(i, mse_tl))
 
         elif not parametrisation:
-            x_comparaison_TL, y_comparaison_TL, px_comparaison_TL, py_comparaison_TL = (
-                unpack(trajectoires_xy_TL)
-            )
-            mse_TL = compute_mse(
-                x_comparaison_TL,
-                y_comparaison_TL,
-                px_comparaison_TL,
-                py_comparaison_TL,
+            (
+                x_comparaison_tl,
+                y_comparaison_tl,
+                px_comparaison_tl,
+                py_comparaison_tl,
+            ) = unpack(trajectoires_xy_tl)
+            mse_tl = compute_mse(
+                x_comparaison_tl,
+                y_comparaison_tl,
+                px_comparaison_tl,
+                py_comparaison_tl,
                 x,
                 y,
                 px,
@@ -541,43 +585,43 @@ def plot_all_TL(
                 Nt,
             )
             # Should probably do a dict that saves them / save them to a file for the cluster
-            print("The mse (TL) for head {} is {}".format(i, mse_TL))
+            print("The mse (TL) for head {} is {}".format(i, mse_tl))
             # Is there a way to print it for every epoch like Blake? Yes, but more expensive. I
             # think Blake should also actually consider not computing it for every epoch
             # much more efficient
 
         # Theoretical energy
-        print("The theoretical energy is {}".format(H0_init[i]))
+        print("The theoretical energy is {}".format(h0_init[i]))
         ax[2].plot(
             t_comparaison.cpu().detach(),
-            H0_init[i] * np.ones(Nt),
+            h0_init[i] * np.ones(Nt),
             linestyle=":",
             c="r",
         )
         ax[2].set_title("Energy (TL)")
 
-        H_curr_comparaison_TL = (px_comparaison_TL**2 + py_comparaison_TL**2) / 2
-        for m in range(len(means_cell)):
-            # Get the current means_cell
-            mu_x = means_cell[m][0]
-            mu_y = means_cell[m][1]
+        H_curr_comparaison_tl = (px_comparaison_tl**2 + py_comparaison_tl**2) / 2
+        for m in range(len(means_of_gaussian)):
+            # Get the current means_of_gaussian
+            mu_x = means_of_gaussian[m][0]
+            mu_y = means_of_gaussian[m][1]
 
             # Updating the energy
-            H_curr_comparaison_TL += -alpha_ * torch.exp(
+            H_curr_comparaison_tl += -alpha_ * torch.exp(
                 -(1 / (2 * sigma**2))
-                * ((x_comparaison_TL - mu_x) ** 2 + (y_comparaison_TL - mu_y) ** 2)
+                * ((x_comparaison_tl - mu_x) ** 2 + (y_comparaison_tl - mu_y) ** 2)
             )
-        ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_TL.cpu().detach())
+        ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_tl.cpu().detach())
 
     print("For TL, we had {} head".format(number_of_heads))
     x1, y1, potential_grid_values = potential_grid(
-        initial_x, final_t, alpha_, means_cell, sigma
+        initial_x, final_t, alpha_, means_of_gaussian, sigma
     )
 
     ax[1].contourf(x1, y1, potential_grid_values, levels=20, cmap="Reds_r")
     ax[1].set_xlim(-0.1, 1.1)
 
-    filename_fig = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_TRAJECTORIES_TL.png"
+    filename_fig = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_TRAJECTORIES_tl.png"
     plt.savefig(filename_fig)
 
 
@@ -589,16 +633,23 @@ def compute_mse_(
     py: torch.Tensor,
     Nt,
 ) -> float:
-    """Returns the Mean Square Error (MSE) between the numerical
-    solution and the NN solution
+    """Returns the Mean Square Error (MSE).
+
+    MSE between the numerical solution and the NN solution.
 
     Args:
         trajectoires_xy:
-        x
-        y
-        px
-        py
+            trajectoires xy
+        x:
+            x
+        y:
+            y
+        px:
+            px
+        py:
+            py
         Nt:
+            Nt
 
     """
     # mse:
@@ -614,6 +665,30 @@ def compute_mse_(
 
 # MSE
 def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
+    """Computes the Mean Square Error (MSE).
+
+    MSE between the numerical solution and the NN solution.
+
+    Args:
+        x_:
+            x_
+        y_:
+            y_
+        px_:
+            px_
+        py_:
+            py_
+        x:
+            x
+        y:
+            y
+        px:
+            px
+        py:
+            py
+        Nt:
+            Nt
+    """
     # mse:
     mse = ((x_.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))) ** 2).mean() + (
         (y_.cpu().detach().reshape((-1, 1)) - y.reshape((-1, 1))) ** 2
@@ -627,6 +702,14 @@ def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
 
 # Boundaries of plot
 def update_min_max(x, y):
+    """Updates the minimum and maximum values of x and y.
+
+    Args:
+        x:
+            x
+        y:
+            y
+    """
     if x[-1] > maximum_x:
         maximum_x = x[-1]
     if x[-1] < min_final:
