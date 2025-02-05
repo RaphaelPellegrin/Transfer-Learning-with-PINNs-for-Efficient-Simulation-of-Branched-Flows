@@ -1,4 +1,4 @@
-""" This file contains the function to perform Automatic Differentiation (AD)"""
+""" This file contains the function to perform Automatic Differentiation (AD)."""
 
 import torch
 
@@ -9,13 +9,15 @@ def diff(u, t: torch.Tensor, order=1) -> torch.Tensor:
 
     Args:
         u:
+            The input tensor to differentiate.
         t:
+            The time tensor.
         order:
+            The order of the derivative to compute.
 
     """
     # code adapted from neurodiffeq library
     # https://github.com/NeuroDiffGym/neurodiffeq/blob/master/neurodiffeq/neurodiffeq.py
-    """The derivative of a variable with respect to another."""
     # ones = torch.ones_like(u)
 
     derivative = torch.cat(
@@ -28,8 +30,7 @@ def diff(u, t: torch.Tensor, order=1) -> torch.Tensor:
     if derivative is None:
         print("derivative is None")
         return torch.zeros_like(t, requires_grad=True)
-    else:
-        derivative.requires_grad_()
+    derivative.requires_grad_()
     for i in range(1, order):
 
         derivative = torch.cat(
@@ -42,6 +43,6 @@ def diff(u, t: torch.Tensor, order=1) -> torch.Tensor:
         if derivative is None:
             print("derivative is None")
             return torch.zeros_like(t, requires_grad=True)
-        else:
-            derivative.requires_grad_()
+
+        derivative.requires_grad_()
     return derivative

@@ -1,6 +1,6 @@
 # Here are the means for the Gaussians.
 # These are used when making the random potential
-means_cell: list[list[float, float]] = [
+means_of_gaussian: list[list[float, float]] = [
     [0.74507886, 0.3602802],
     [0.40147605, 0.06139579],
     [0.94162198, 0.46722697],

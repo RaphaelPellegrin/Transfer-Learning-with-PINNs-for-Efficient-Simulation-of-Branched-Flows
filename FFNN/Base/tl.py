@@ -25,11 +25,11 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.optim as optim
+from torch import optim
 from AD import diff
 from energy import get_current_energy
 from neural_network_architecture import NeuralNetwork
-from params import means_cell
+from params import means_of_gaussian
 from plot import plot_all_TL
 from reparametrize import reparametrize, unpack
 from tqdm import trange
@@ -45,8 +45,8 @@ else:
     torch.set_default_tensor_type(torch.DoubleTensor)
     print("No GPU found, using cpu")
 
-lineW = 3
-lineBoxW = 2
+LINE_W = 3
+LINE_BOX_W = 2
 font = {"size": 24}
 
 plt.rc("font", **font)
@@ -57,15 +57,15 @@ def perform_transfer_learning(
     network_in: NeuralNetwork,
     specify_initial_condition: bool = True,
     init_specified: float = 0.55,
-    step_LR_step: int = 1000,
-    step_LR_gamma: float = 0.9,
+    step_lr_step: int = 1000,
+    step_lr_gamma: float = 0.9,
     adam_learning_rate: float = 0.01,
     sgd_momentum: float = 0,
     sgd_lr: float = 0.005,
-    energy_TL_weight: int = 3,
-    use_SGD_TL: bool = False,
+    energy_tl_weight: int = 3,
+    use_sgd_tl: bool = False,
     parametrisation: bool = True,
-    TL_weighting: int = 1,
+    tl_weighting: int = 1,
     alpha_: float = 0.1,
     sigma: float = 0.1,
     initial_x: float = 0,
@@ -73,9 +73,9 @@ def perform_transfer_learning(
     initial_py: float = 0,
     final_t: float = 1,
     width_base: int = 40,
-    num_epochs_TL: int = 25000,
+    num_epochs_tl: int = 25000,
     grid_size: int = 400,
-    number_of_heads_TL: int = 11,
+    number_of_heads_tl: int = 11,
     number_of_epochs: int = 5,
     path_saving_tl_model="TL/models",
     energy_conservation: bool = True,
@@ -90,17 +90,17 @@ def perform_transfer_learning(
             whether to specify the initial condition or to pick one at random
         init_specified:
             the initial condition (specified)
-        step_LR_step:
-        step_LR_gamma:
+        step_lr_step:
+        step_lr_gamma:
         adam_learning_rate:
             the learning rate for the adam optimizer
         sgd_momentum:
             the momentum for stochastic gradient descent
         sgd_lr:
             the learning rate for stochastic gradient descent
-        energy_TL_weight:
+        energy_tl_weight:
             the weight assigned to the "energy-conservation" loss
-        use_SGD_TL:
+        use_sgd_tl:
         parametrisation:
             whether the output of the NN is parametrized to satisfy the boundary
             conditions exactly or whether that should be a component of the loss.
@@ -115,7 +115,7 @@ def perform_transfer_learning(
             the number of epochs we train the NN for the TL
 
 
-        means_cell should be of the forms [[mu_x1,mu_y1],..., [mu_xn,mu_yn]]
+        means_of_gaussian should be of the forms [[mu_x1,mu_y1],..., [mu_xn,mu_yn]]
 
         random_ic:
             whether we have random initial conditions within the possible y(0)
@@ -130,7 +130,7 @@ def perform_transfer_learning(
             inital value for x(0)
         final_t:
             final time
-        means_cell:
+        means_of_gaussian:
             the means used for tge Gaussians
         alpha_:
         width_heads:
@@ -139,7 +139,7 @@ def perform_transfer_learning(
             the number of random points (time) used in training
         number_of_heads:
             the number of heads in the original (base+head) network
-        number_of_heads_TL:
+        number_of_heads_tl:
             number of heads for TL
         path_saving_tl_model:
         print_legend:
@@ -156,7 +156,7 @@ def perform_transfer_learning(
     # For comparaison
     temp_loss_TL = np.inf
 
-    loss_record_TL: np.ndarray = np.zeros(num_epochs_TL)
+    loss_record_TL: np.ndarray = np.zeros(num_epochs_tl)
 
     ## LOADING WEIGHTS PART if path_saving_tl_model file exists and loadWeights=True
     print("We load the previous model for transfer learning")
@@ -165,15 +165,15 @@ def perform_transfer_learning(
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html
     network50 = copy.deepcopy(trained_network_base)
 
-    if not use_SGD_TL:
+    if not use_sgd_tl:
         optimizer50 = optim.Adam(network50.parameters(), lr=adam_learning_rate)
-    if use_SGD_TL:
+    if use_sgd_tl:
         optimizer50 = optim.SGD(
             network50.parameters(), momentum=sgd_momentum, lr=sgd_lr
         )
 
     scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer50, step_size=step_LR_step, gamma=step_LR_gamma
+        optimizer50, step_size=step_lr_step, gamma=step_lr_gamma
     )
 
     # Now we are going to freeze some layers and keep training after that
@@ -195,7 +195,7 @@ def perform_transfer_learning(
     H0_init_TL: dict = {}
 
     if not specify_initial_condition:
-        for j in range(number_of_heads_TL):
+        for j in range(number_of_heads_tl):
             # Initial conditions
             initial_condition_TL = random.randint(0, 100) / 100
             print(
@@ -205,7 +205,7 @@ def perform_transfer_learning(
             )
             initial_conditions_tl_dictionary[j] = initial_condition_TL
     else:
-        for j in range(number_of_heads_TL):
+        for j in range(number_of_heads_tl):
             # Initial conditions
             initial_condition_TL = init_specified[j]
             print(
@@ -220,8 +220,8 @@ def perform_transfer_learning(
 
     # Dictionary keeping track of the loss for each head
     losses_each_head_TL: dict = {}
-    for k in range(number_of_heads_TL):
-        losses_each_head_TL[k] = np.zeros(num_epochs_TL)
+    for k in range(number_of_heads_tl):
+        losses_each_head_TL[k] = np.zeros(num_epochs_tl)
 
     # For every epoch...
 
@@ -231,7 +231,7 @@ def perform_transfer_learning(
 
     optimizer50.zero_grad()
 
-    with trange(num_epochs_TL) as tepoch_TL:
+    with trange(num_epochs_tl) as tepoch_TL:
         for ne in tepoch_TL:
             tepoch_TL.set_description(f"Epoch {ne}")
             if ne > 0:
@@ -242,7 +242,7 @@ def perform_transfer_learning(
             # It is frozen so it does not need to be trained
             # TODO
             x_base_TL = network50.base(t)
-            d_TL = network50.forward_TL(x_base_TL)
+            d_TL = network50.forward_tl(x_base_TL)
 
             # loss
             loss_TL: float = 0
@@ -250,7 +250,7 @@ def perform_transfer_learning(
             losses_part_current_TL = {}
 
             # For each head...
-            for l in range(number_of_heads_TL):
+            for l in range(number_of_heads_tl):
                 # Get the current head
                 head_TL = d_TL[l]
                 # Get the corresponding initial condition
@@ -276,8 +276,8 @@ def perform_transfer_learning(
                 py_dot_TL = diff(py_TL, t, 1)
 
                 # Loss
-                L1_TL = ((x_dot_TL - px_TL) ** 2).mean()
-                L2_TL = ((y_dot_TL - py_TL) ** 2).mean()
+                l1_tl = ((x_dot_TL - px_TL) ** 2).mean()
+                l2_tl = ((y_dot_TL - py_TL) ** 2).mean()
 
                 # For the other components of the loss, we need the potential V
                 # and its derivatives
@@ -297,27 +297,27 @@ def perform_transfer_learning(
                     partial_y_TL,
                     alpha_=alpha_,
                     sigma=sigma,
-                    means_cell=means_cell,
+                    means_of_gaussian=means_of_gaussian,
                 )
 
                 ## We can finally set the energy for head l
                 H0_init_TL[l] = H_0_TL
 
                 # Other components of the loss
-                L3_TL = ((px_dot_TL + partial_x_TL) ** 2).mean()
-                L4_TL = ((py_dot_TL + partial_y_TL) ** 2).mean()
+                l3_tl = ((px_dot_TL + partial_x_TL) ** 2).mean()
+                l4_tl = ((py_dot_TL + partial_y_TL) ** 2).mean()
 
                 # Nota Bene: L1,L2,L3 and L4 are Hamilton's equations
 
                 # Initial conditions taken into consideration into the loss
                 ## Position
                 if parametrisation:
-                    L5_TL = 0
+                    l5_tl = 0
                     L6_TL = 0
                     L7_TL = 0
                     L8_TL = 0
                 elif not parametrisation:
-                    L5_TL = ((x_TL[0, 0] - initial_x) ** 2) * TL_weighting
+                    l5_tl = ((x_TL[0, 0] - initial_x) ** 2) * tl_weighting
                     L6_TL = (y_TL[0, 0] - initial_y_TL) ** 2
                     ## Velocity
                     L7_TL = (px_TL[0, 0] - initial_px) ** 2
@@ -328,35 +328,35 @@ def perform_transfer_learning(
                 if not energy_conservation:
                     # total loss
                     loss_TL += (
-                        L1_TL + L2_TL + L3_TL + L4_TL + L5_TL + L6_TL + L7_TL + L8_TL
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_TL + L7_TL + L8_TL
                     )
                     # loss for current head
                     lossl_val_TL = (
-                        L1_TL + L2_TL + L3_TL + L4_TL + L5_TL + L6_TL + L7_TL + L8_TL
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_TL + L7_TL + L8_TL
                     )
                 if energy_conservation:
                     # total loss
                     loss_TL += (
-                        L1_TL
-                        + L2_TL
-                        + L3_TL
-                        + L4_TL
-                        + L5_TL
+                        l1_tl
+                        + l2_tl
+                        + l3_tl
+                        + l4_tl
+                        + l5_tl
                         + L6_TL
                         + L7_TL
                         + L8_TL
-                        + energy_TL_weight * L9_TL
+                        + energy_tl_weight * L9_TL
                     )
                     # loss for current head
                     lossl_val_TL = (
-                        L1_TL
-                        + L2_TL
-                        + L3_TL
-                        + L4_TL
-                        + L5_TL
+                        l1_tl
+                        + l2_tl
+                        + l3_tl
+                        + l4_tl
+                        + l5_tl
                         + L6_TL
                         + L7_TL
-                        + energy_TL_weight * L9_TL
+                        + energy_tl_weight * L9_TL
                     )
 
                 # the loss for head l at epoch ne is stored
@@ -402,11 +402,11 @@ def perform_transfer_learning(
         print("Increase number of epochs")
 
     maxi_indi_TL = 0
-    for g in range(number_of_heads_TL):
+    for g in range(number_of_heads_tl):
         if individual_losses_saved_TL[g] > maxi_indi_TL:
             maxi_indi_TL = individual_losses_saved_TL[g]
     print("The maximum of the individual losses (for TL) was {}".format(maxi_indi_TL))
-    total_epochs_TL += num_epochs_TL
+    total_epochs_TL += num_epochs_tl
 
     ### Save network2_TL here (to train again in the next cell) ################
     torch.save(
@@ -421,18 +421,18 @@ def perform_transfer_learning(
         path_saving_tl_model,
     )
     # Saving the network
-    filename = f"TL/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_TL)}_grid_size_{str(grid_size)}_Network_state_Tl.p"
+    filename = f"TL/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_tl)}_grid_size_{str(grid_size)}_Network_state_Tl.p"
     f = open(filename, "wb")
     pickle.dump(network2_TL.state_dict(), f)
     f.close()
 
     # Forward pass (network2 is the best network now)
     x_base_TL2 = network2_TL.base(t)
-    d2_TL = network2_TL.forward_TL(x_base_TL2)
+    d2_TL = network2_TL.forward_tl(x_base_TL2)
 
     initial_y = initial_conditions_tl_dictionary[0]
     # Saving the loss
-    filename = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_TL)}_grid_size_{str(grid_size)}_lossTL.p"
+    filename = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs_{str(number_of_epochs)}_epochsTL{str(num_epochs_tl)}_grid_size_{str(grid_size)}_lossTL.p"
     f = open(filename, "wb")
     pickle.dump(loss_record_TL, f)
     f.close()
@@ -456,7 +456,7 @@ def perform_transfer_learning(
 def main(
     number_of_epochs: int = 50000,  # this last parameter is important as it dictates which "pre-trained" base model we use
     number_of_heads: int = 11,
-    number_of_heads_TL: int = 1,
+    number_of_heads_tl: int = 1,
     final_time: float = 1,
     width_base: int = 40,
     initial_x=0,
@@ -466,7 +466,7 @@ def main(
     grid_size=400,
     sigma=0.1,
     parametrisation=True,
-    num_epochs_TL=25000,
+    num_epochs_tl=25000,
 ) -> None:
     """Does TL
 
@@ -496,24 +496,24 @@ def main(
         network_base,
         specify_initial_condition=True,
         init_specified=[0.55],
-        step_LR_step=1000,
-        step_LR_gamma=0.995,
+        step_lr_step=1000,
+        step_lr_gamma=0.995,
         sgd_lr=0.025,
-        use_SGD_TL=True,
+        use_sgd_tl=True,
         parametrisation=True,
         initial_x=initial_x,
         initial_px=initial_px,
         initial_py=initial_py,
-        num_epochs_TL=num_epochs_TL,
+        num_epochs_tl=num_epochs_tl,
         grid_size=400,
-        number_of_heads_TL=number_of_heads_TL,
+        number_of_heads_tl=number_of_heads_tl,
         number_of_epochs=number_of_epochs,
         energy_conservation=True,
     )
 
     plot_all_TL(
-        number_of_epochs=num_epochs_TL,
-        number_of_heads=number_of_heads_TL,
+        number_of_epochs=num_epochs_tl,
+        number_of_heads=number_of_heads_tl,
         loss_record=loss_record_TL,
         losses_each_head=losses_each_head_TL,
         network_trained=network2_TL,
