@@ -56,9 +56,7 @@ def potential_grid(
     f.close()
 
     # Saving the mesh grid
-    filename: str = (
-        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
-    )
+    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
     f = open(filename, "wb")
     pickle.dump(x, f)
     pickle.dump(y, f)
@@ -74,9 +72,7 @@ def potential_grid(
         )
 
     # Saving the values of potential_grid_values on the grid
-    filename: str = (
-        f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
-    )
+    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
     f = open(filename, "wb")
     pickle.dump(potential_grid_values, f)
     f.close()
@@ -99,7 +95,7 @@ def plot_all(
     alpha_: float,
     grid_size: int,
     sigma: float,
-    H0_init,
+    h0_init,
     times_t,
     print_legend: bool = True,
     tl: str = "",  # for TL
@@ -128,7 +124,7 @@ def plot_all(
             the number of random points (time) used in training
         sigma:
             used when constructing the potential. Std of the Gaussian (shared)
-        H0_init:
+        h0_init:
         times_t:
         print_legend:
         tl:
@@ -312,10 +308,10 @@ def plot_all(
             )
 
         # Theoretical energy
-        print("The theoretical energy is {}".format(H0_init[i]))
+        print("The theoretical energy is {}".format(h0_init[i]))
         ax[4].plot(
             t_comparaison.cpu().detach(),
-            H0_init[i] * np.ones(Nt),
+            h0_init[i] * np.ones(Nt),
             linestyle=":",
             c="r",
         )
@@ -391,7 +387,7 @@ def plot_all_tl(
     alpha_: float,
     grid_size: int,
     sigma: float,
-    H0_init,
+    h0_init,
     times_t,
     print_legend: bool = True,
 ) -> None:
@@ -555,10 +551,10 @@ def plot_all_tl(
             # much more efficient
 
         # Theoretical energy
-        print("The theoretical energy is {}".format(H0_init[i]))
+        print("The theoretical energy is {}".format(h0_init[i]))
         ax[2].plot(
             t_comparaison.cpu().detach(),
-            H0_init[i] * np.ones(Nt),
+            h0_init[i] * np.ones(Nt),
             linestyle=":",
             c="r",
         )

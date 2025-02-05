@@ -192,7 +192,7 @@ def perform_transfer_learning(
     # Dictionary for the initial conditions
     initial_conditions_tl_dictionary: dict = {}
     # Dictionary for the initial energy for each initial conditions
-    H0_init_tl: dict = {}
+    h0_init_tl: dict = {}
 
     if not specify_initial_condition:
         for j in range(number_of_heads_tl):
@@ -301,38 +301,38 @@ def perform_transfer_learning(
                 )
 
                 ## We can finally set the energy for head l
-                H0_init_tl[l] = H_0_tl
+                h0_init_tl[l] = H_0_tl
 
                 # Other components of the loss
                 l3_tl = ((px_dot_tl + partial_x_tl) ** 2).mean()
                 l4_tl = ((py_dot_tl + partial_y_tl) ** 2).mean()
 
-                # Nota Bene: L1,L2,L3 and L4 are Hamilton's equations
+                # Nota Bene: l1,l2,l3 and l4 are Hamilton's equations
 
                 # Initial conditions taken into consideration into the loss
                 ## Position
                 if parametrisation:
                     l5_tl = 0
-                    L6_tl = 0
+                    l6_tl = 0
                     L7_tl = 0
                     L8_tl = 0
                 elif not parametrisation:
                     l5_tl = ((x_tl[0, 0] - initial_x) ** 2) * tl_weighting
-                    L6_tl = (y_tl[0, 0] - initial_y_tl) ** 2
+                    l6_tl = (y_tl[0, 0] - initial_y_tl) ** 2
                     ## Velocity
                     L7_tl = (px_tl[0, 0] - initial_px) ** 2
                     L8_tl = (py_tl[0, 0] - initial_py) ** 2
 
-                # Could add the penalty that H is constant L9
-                L9_tl = ((H_0_tl - H_curr_tl) ** 2).mean()
+                # Could add the penalty that H is constant l9
+                l9_tl = ((H_0_tl - H_curr_tl) ** 2).mean()
                 if not energy_conservation:
                     # total loss
                     loss_tl += (
-                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_tl + L7_tl + L8_tl
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + l6_tl + L7_tl + L8_tl
                     )
                     # loss for current head
                     lossl_val_tl = (
-                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + L6_tl + L7_tl + L8_tl
+                        l1_tl + l2_tl + l3_tl + l4_tl + l5_tl + l6_tl + L7_tl + L8_tl
                     )
                 if energy_conservation:
                     # total loss
@@ -342,10 +342,10 @@ def perform_transfer_learning(
                         + l3_tl
                         + l4_tl
                         + l5_tl
-                        + L6_tl
+                        + l6_tl
                         + L7_tl
                         + L8_tl
-                        + energy_tl_weight * L9_tl
+                        + energy_tl_weight * l9_tl
                     )
                     # loss for current head
                     lossl_val_tl = (
@@ -354,9 +354,9 @@ def perform_transfer_learning(
                         + l3_tl
                         + l4_tl
                         + l5_tl
-                        + L6_tl
+                        + l6_tl
                         + L7_tl
-                        + energy_tl_weight * L9_tl
+                        + energy_tl_weight * l9_tl
                     )
 
                 # the loss for head l at epoch ne is stored
@@ -444,7 +444,7 @@ def perform_transfer_learning(
         loss_record_tl,
         losses_each_head_tl,
         initial_conditions_tl_dictionary,
-        H0_init_tl,
+        h0_init_tl,
     )
 
 
@@ -491,7 +491,7 @@ def main(
         loss_record_tl,
         losses_each_head_tl,
         initial_conditions_tl_dictionary,
-        H0_init_tl,
+        h0_init_tl,
     ) = perform_transfer_learning(
         network_base,
         specify_initial_condition=True,
@@ -526,7 +526,7 @@ def main(
         alpha_=alpha_,
         grid_size=grid_size,
         sigma=sigma,
-        H0_init=H0_init_tl,
+        h0_init=h0_init_tl,
         times_t=t,
         print_legend=True,
     )

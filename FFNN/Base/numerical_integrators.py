@@ -74,7 +74,7 @@ def ray_tracing_system(
 
 # Scipy Solver
 def numerical_integrator(
-    t,
+    t: np.ndarray,
     x0: float,
     y0: float,
     px0: float,
@@ -117,8 +117,8 @@ def numerical_integrator(
             alpha_,
         ),
     )
-    xP: np.ndarray = solPend[:, 0]
-    yP: np.ndarray = solPend[:, 1]
-    pxP: np.ndarray = solPend[:, 2]
-    pyP: np.ndarray = solPend[:, 3]
-    return xP, yP, pxP, pyP
+    xp: np.ndarray = solPend[:, 0]
+    yp: np.ndarray = solPend[:, 1]
+    pxp: np.ndarray = solPend[:, 2]
+    pyp: np.ndarray = solPend[:, 3]
+    return xp, yp, pxp, pyp

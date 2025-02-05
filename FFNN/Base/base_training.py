@@ -141,7 +141,7 @@ def initial_full_network_training(
     # Dictionary for the initial conditions
     initial_conditions_dictionary: dict = {}
     # Dictionary for the initial energy for each initial conditions
-    H0_init: dict = {}
+    h0_init: dict = {}
 
     # Random create initial conditions
     if not load_weights:
@@ -226,8 +226,8 @@ def initial_full_network_training(
                 py_dot = diff(py, t, 1)
 
                 # Loss
-                L1 = ((x_dot - px) ** 2).mean()
-                L2 = ((y_dot - py) ** 2).mean()
+                l1 = ((x_dot - px) ** 2).mean()
+                l2 = ((y_dot - py) ** 2).mean()
 
                 # For the other components of the loss, we need the potential V
                 # and its derivatives
@@ -253,40 +253,40 @@ def initial_full_network_training(
                 )
 
                 ## We can finally set the energy for head l
-                H0_init[l] = H_0
+                h0_init[l] = H_0
 
                 # Other components of the loss
-                L3 = ((px_dot + partial_x) ** 2).mean()
-                L4 = ((py_dot + partial_y) ** 2).mean()
+                l3 = ((px_dot + partial_x) ** 2).mean()
+                l4 = ((py_dot + partial_y) ** 2).mean()
 
-                # Nota Bene: L1,L2,L3 and L4 are Hamilton's equations
+                # Nota Bene: l1,l2,l3 and l4 are Hamilton's equations
 
                 # Initial conditions taken into consideration into the loss
                 ## Position
                 if parametrisation:
-                    L5 = 0
-                    L6 = 0
+                    l5 = 0
+                    l6 = 0
                     L7 = 0
                     L8 = 0
                 elif not parametrisation:
-                    L5 = (x[0, 0] - initial_x) ** 2
-                    L6 = (y[0, 0] - initial_y) ** 2
+                    l5 = (x[0, 0] - initial_x) ** 2
+                    l6 = (y[0, 0] - initial_y) ** 2
                     ## Velocity
                     L7 = (px[0, 0] - initial_px) ** 2
                     L8 = (py[0, 0] - initial_py) ** 2
 
-                # Could add the penalty that H is constant L9
-                L9 = ((H_0 - H_curr) ** 2).mean()
+                # Could add the penalty that H is constant l9
+                l9 = ((H_0 - H_curr) ** 2).mean()
                 if not energy_conservation:
                     # total loss
-                    loss += L1 + L2 + L3 + L4 + L5 + L6 + L7 + L8
+                    loss += l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8
                     # loss for current head
-                    lossl_val = L1 + L2 + L3 + L4 + L5 + L6 + L7 + L8
+                    lossl_val = l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8
                 if energy_conservation:
                     # total loss
-                    loss += L1 + L2 + L3 + L4 + L5 + L6 + L7 + L8 + L9
+                    loss += l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8 + l9
                     # loss for current head
-                    lossl_val = L1 + L2 + L3 + L4 + L5 + L6 + L7 + L8 + L9
+                    lossl_val = l1 + l2 + l3 + l4 + l5 + l6 + L7 + L8 + l9
 
                 # the loss for head l at epoch ne is stored
                 losses_each_head[l][ne] = lossl_val
@@ -351,7 +351,7 @@ def initial_full_network_training(
         loss_record,
         losses_each_head,
         initial_conditions_dictionary,
-        H0_init,
+        h0_init,
     )
 
 
@@ -400,7 +400,7 @@ def main(
         loss_record,
         losses_each_head,
         initial_conditions_dictionary,
-        H0_init,
+        h0_init,
     ) = initial_full_network_training(
         random_ic=False,
         parametrisation=parametrisation,
@@ -449,7 +449,7 @@ def main(
     # d2 *can get with network_base and t)
     # t
     # initial_condition_dictionary
-    # and H0_init to be able to reload fast.
+    # and h0_init to be able to reload fast.
 
     plot_all(
         number_of_epochs=number_of_epochs,
@@ -466,7 +466,7 @@ def main(
         alpha_=alpha_,
         grid_size=grid_size,
         sigma=sigma,
-        H0_init=H0_init,
+        h0_init=h0_init,
         times_t=t,
         print_legend=True,
     )
