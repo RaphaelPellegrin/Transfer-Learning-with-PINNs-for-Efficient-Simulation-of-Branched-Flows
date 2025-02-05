@@ -13,24 +13,21 @@ conda create -n <your_venv> python=3.11
 
 conda activate <your_venv>
 
-pip install -r requirements.txt
+pip install -e .
 ```
 
-Then the base training is performed in
-FFFN/Base/base_training.py
-
-where FFNN stands for Feed-Forward Neural Network. See Blake's and Dylan's GithHubs for the GANs code.
+Then the base training is performed in ```scripts/base_training.py```
 
 it can be run from the terminal using:
 
 ```
-python base_training.py
+python scripts/base_training.py
 ```
 
-When the training of the base is finished, TL is performed by calling ```tl.py```
+When the training of the base is finished, TL is performed by calling ```scripts/tl.py```
 
 ```
-python tl.py
+python scripts/tl.py
 ```
 
 # Citing

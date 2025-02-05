@@ -15,13 +15,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch import optim
-from AD import diff
-from energy import get_current_energy
-from neural_network_architecture import NeuralNetwork
-from params import means_of_gaussian
-from plot import plot_all
-from reparametrize import reparametrize, unpack
 from tqdm import trange
+
+from pinns.ad import diff
+from pinns.energy import get_current_energy
+from pinns.neural_network_architecture import NeuralNetwork
+from pinns.params import means_of_gaussian
+from pinns.plot import plot_all
+from pinns.reparametrize import reparametrize, unpack
 
 # Use GPU if possible
 if torch.cuda.is_available():
