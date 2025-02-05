@@ -1,4 +1,4 @@
-""" This file contains the function to perform Automatic Differentiation."""
+"""This file contains the function to perform Automatic Differentiation."""
 
 import torch
 

@@ -1,4 +1,4 @@
-""" This file is used to get the numerical integrators. 
+"""This file is used to get the numerical integrators.
 
 We can use these to compare to the NN output.
 

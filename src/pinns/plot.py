@@ -9,6 +9,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+
 from pinns.neural_network_architecture import NeuralNetwork
 from pinns.numerical_integrators import numerical_integrator
 from pinns.params import means_of_gaussian

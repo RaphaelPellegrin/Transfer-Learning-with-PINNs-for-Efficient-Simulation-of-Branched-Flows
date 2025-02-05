@@ -1,4 +1,4 @@
-""" This file is used to define the NN architectures we use in the paper."""
+"""This file is used to define the NN architectures we use in the paper."""
 
 from torch import nn
 

@@ -1,6 +1,6 @@
 """Functions used to reparametrize NN outputs.
 
-We use the reparametrisation from Mattheakis et al. 
+We use the reparametrisation from Mattheakis et al.
 THe idea is to satisfy the IC exactly when t=0,
 and decay the constraint exponentially in t.
 
