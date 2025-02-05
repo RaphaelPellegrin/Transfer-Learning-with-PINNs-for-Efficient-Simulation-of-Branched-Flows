@@ -129,5 +129,6 @@ class NeuralNetwork(nn.Module):
         """
         d: dict = {}
         for n in range(self.number_heads_tl):
+            xa = self.lina_tl[n](x)
             d[n] = self.lout1_tl[n](xa)
         return d

@@ -225,6 +225,7 @@ def plot_all(
         print("The initial condition used is", initial_conditions_dictionary[i])
         initial_y = initial_conditions_dictionary[i]
         x, y, px, py = numerical_integrator(
+            t,
             x0=x0,
             y0=initial_conditions_dictionary[i],
             px0=px0,
@@ -487,6 +488,7 @@ def plot_all_TL(
         initial_y = initial_conditions_dictionary[i]
         print("The initial condition used is", initial_conditions_dictionary[i])
         x, y, px, py = numerical_integrator(
+            t,
             x0,
             initial_conditions_dictionary[i],
             px0,

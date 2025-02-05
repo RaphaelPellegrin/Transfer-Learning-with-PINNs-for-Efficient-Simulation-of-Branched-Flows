@@ -74,6 +74,7 @@ def ray_tracing_system(
 
 # Scipy Solver
 def numerical_integrator(
+    t,
     x0: float,
     y0: float,
     px0: float,
@@ -109,6 +110,7 @@ def numerical_integrator(
     solPend: np.ndarray = odeint(
         ray_tracing_system,
         u0,
+        t,
         args=(
             means_gaussian,
             sigma,
