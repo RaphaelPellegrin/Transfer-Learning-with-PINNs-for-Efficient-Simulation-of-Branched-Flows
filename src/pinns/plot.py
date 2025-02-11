@@ -700,27 +700,6 @@ def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
     return mse
 
 
-# Boundaries of plot
-def update_min_max(x, y):
-    """Updates the minimum and maximum values of x and y.
-
-    Args:
-        x:
-            x
-        y:
-            y
-    """
-    if x[-1] > maximum_x:
-        maximum_x = x[-1]
-    if x[-1] < min_final:
-        min_final = x[-1]
-    if min(y) < minimum_y:
-        minimum_y = min(y)
-    if max(y) > maximum_y:
-        maximum_y = max(y)
-    return maximum_x, min_final, minimum_y, maximum_y
-
-
 ################################################################################
 ################################## Saving functions ############################
 ################################################################################

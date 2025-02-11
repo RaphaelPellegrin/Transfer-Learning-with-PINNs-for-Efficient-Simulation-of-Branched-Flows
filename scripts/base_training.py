@@ -110,9 +110,6 @@ def initial_full_network_training(
         norm_clipping:
             whether to do norm clipping
     """
-    # We will time the process
-    # Access the current time
-    t0 = time.time()
 
     # Set out tensor of times
     t = torch.linspace(0, final_t, grid_size, requires_grad=True).reshape(-1, 1)
@@ -383,8 +380,6 @@ def main(
     width_base: int = 40,
 ):
     initial_x = 0
-    initial_px = 1
-    initial_py = 0
     alpha_ = 0.1
     grid_size = 400
     sigma = 0.1
