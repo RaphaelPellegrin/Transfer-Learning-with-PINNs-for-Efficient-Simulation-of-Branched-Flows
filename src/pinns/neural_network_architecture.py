@@ -1,11 +1,11 @@
-""" This file is used to define the NN architectures we use in the paper"""
+"""This file is used to define the NN architectures we use in the paper."""
 
-import torch.nn as nn
+from torch import nn
 
 
 # Define the NN
 class NeuralNetwork(nn.Module):
-    """ """
+    """Neural network architecture."""
 
     def __init__(
         self,
@@ -15,7 +15,9 @@ class NeuralNetwork(nn.Module):
         number_heads: int = 1,
         number_heads_tl: int = 1,
     ):
-        """width_base is the number of nodes within each layer
+        """Initialize the NeuralNetwork.
+
+        width_base is the number of nodes within each layer
         depth_base is 1 minus the number of hidden layers
         N is the number of heads
 
@@ -27,14 +29,14 @@ class NeuralNetwork(nn.Module):
             width_base:
                 the width of the base network
                 shared by all layers in the base
-            width_heads: 
+            width_heads:
                 the width of the heads
                 shared by all heads
-            depth_base: 
+            depth_base:
                 the depth of the base
-            number_heads: 
+            number_heads:
                 the number of heads
-            number_heads_tl: 
+            number_heads_tl:
                 the number of heads for tl (can be done in parallel)
 
         """
@@ -64,32 +66,32 @@ class NeuralNetwork(nn.Module):
         # but leaving the possibility open
         self.lout1 = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
         self.lout1.extend(
-            [
-                nn.Linear(width_heads, 4, bias=True)
-                for i in range(number_heads - 1)
-            ]
+            [nn.Linear(width_heads, 4, bias=True) for i in range(number_heads - 1)]
         )
 
         ### FOR TL
         # from last hidden layer of base to head number 1
-        self.lina_TL = nn.ModuleList([nn.Linear(width_base, width_heads)])
+        self.lina_tl = nn.ModuleList([nn.Linear(width_base, width_heads)])
         # extend to all heads
-        self.lina_TL.extend(
-            [
-                nn.Linear(width_base, width_heads)
-                for i in range(number_heads_tl - 1)
-            ]
+        self.lina_tl.extend(
+            [nn.Linear(width_base, width_heads) for i in range(number_heads_tl - 1)]
         )
         # 4 outputs for x,y, p_x, p_y
-        self.lout1_TL = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
-        self.lout1_TL.extend(
-            [
-                nn.Linear(width_heads, 4, bias=True)
-                for i in range(number_heads_tl - 1)
-            ]
+        self.lout1_tl = nn.ModuleList([nn.Linear(width_heads, 4, bias=True)])
+        self.lout1_tl.extend(
+            [nn.Linear(width_heads, 4, bias=True) for i in range(number_heads_tl - 1)]
         )
 
     def base(self, t):
+        """Base network.
+
+        Args:
+            t:
+                The input tensor.
+
+        Returns:
+            The output tensor.
+        """
         x = self.lin1(t)
         x = self.nl(x)
         for m in range(self.depth_base):
@@ -99,6 +101,15 @@ class NeuralNetwork(nn.Module):
 
     # Forward for initial training pass
     def forward_initial(self, x) -> dict:
+        """Forward pass for initial training.
+
+        Args:
+            x:
+                The input tensor.
+
+        Returns:
+            A dictionary containing the output of the network.
+        """
         d: dict = {}
         for n in range(self.number_heads):
             xa = self.lina[n](x)
@@ -106,9 +117,18 @@ class NeuralNetwork(nn.Module):
         return d
 
     # forward for Transfer Learning
-    def forward_TL(self, x) -> dict:
+    def forward_tl(self, x) -> dict:
+        """Forward pass for Transfer Learning.
+
+        Args:
+            x:
+                The input tensor.
+
+        Returns:
+            A dictionary containing the output of the network.
+        """
         d: dict = {}
         for n in range(self.number_heads_tl):
-            xa = self.lina_TL[n](x)
-            d[n] = self.lout1_TL[n](xa)
+            xa = self.lina_tl[n](x)
+            d[n] = self.lout1_tl[n](xa)
         return d
