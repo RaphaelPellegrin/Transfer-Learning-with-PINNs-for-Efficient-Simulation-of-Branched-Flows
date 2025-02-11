@@ -22,7 +22,7 @@ def ray_tracing_system(
     means_gaussian: list,
     sigma: float = 0.1,
     alpha_: float = 0.1,
-) -> list[float, float, float, float]:
+) -> list[float]:
     """Returns the derivatives of the system.
 
     We have the derivatives of:
