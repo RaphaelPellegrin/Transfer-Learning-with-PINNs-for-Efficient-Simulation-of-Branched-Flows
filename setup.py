@@ -1,3 +1,6 @@
+"""Setup for the PINNs project."""
+
+
 from setuptools import find_packages, setup
 
 setup(
