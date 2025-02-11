@@ -20,7 +20,7 @@ def diff(u: torch.Tensor, t: torch.Tensor, order: int = 1) -> torch.Tensor:
     # https://github.com/NeuroDiffGym/neurodiffeq/blob/master/neurodiffeq/neurodiffeq.py
     # ones = torch.ones_like(u)
 
-    derivative = torch.cat(
+    derivative : torch.Tensor = torch.cat(
         [
             torch.autograd.grad(u[:, i].sum(), t, create_graph=True)[0]
             for i in range(u.shape[1])

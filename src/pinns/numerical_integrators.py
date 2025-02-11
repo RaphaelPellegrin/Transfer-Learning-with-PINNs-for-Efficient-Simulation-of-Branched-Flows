@@ -22,7 +22,7 @@ def ray_tracing_system(
     means_gaussian: list,
     sigma: float = 0.1,
     alpha_: float = 0.1,
-) -> list[float, float, float, float]:
+) -> list[float]:
     """Returns the derivatives of the system.
 
     We have the derivatives of:
@@ -42,6 +42,10 @@ def ray_tracing_system(
             used in potential construction. Scale for the potential
 
     """
+    x: float 
+    y: float
+    px: float
+    py: float
     # unpack current values of u
     x, y, px, py = u
 
@@ -107,7 +111,7 @@ def numerical_integrator(
     """
     u0: list[float, float, float, float] = [x0, y0, px0, py0]
     # Call the ODE solver
-    solPend: np.ndarray = odeint(
+    solution: np.ndarray = odeint(
         ray_tracing_system,
         u0,
         t,
@@ -117,8 +121,8 @@ def numerical_integrator(
             alpha_,
         ),
     )
-    xp: np.ndarray = solPend[:, 0]
-    yp: np.ndarray = solPend[:, 1]
-    pxp: np.ndarray = solPend[:, 2]
-    pyp: np.ndarray = solPend[:, 3]
+    xp: np.ndarray = solution[:, 0]
+    yp: np.ndarray = solution[:, 1]
+    pxp: np.ndarray = solution[:, 2]
+    pyp: np.ndarray = solution[:, 3]
     return xp, yp, pxp, pyp
