@@ -10,10 +10,10 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
-        "torch",
+        "torch==2.0.0",
         "click",
         "tqdm",
-        "numpy",
+        "numpy>=1.24.3,<2.0.0",
         "pandas",
         "matplotlib",
         "scipy",
