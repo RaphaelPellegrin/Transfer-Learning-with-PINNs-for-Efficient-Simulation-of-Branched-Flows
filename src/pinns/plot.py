@@ -21,6 +21,17 @@ font: dict = {"size": 24}
 plt.rc("font", **font)
 
 
+
+# TODO: this is replacing part of the code below.
+def calculate_potential(x: np.ndarray, y: np.ndarray, alpha_: float, sigma: float) -> np.ndarray:
+    """Calculate potential field."""
+    potential = np.zeros_like(x)
+    for mu_x, mu_y in means_of_gaussian:
+        r_squared = (x - mu_x)**2 + (y - mu_y)**2
+        potential += -alpha_ * np.exp(-r_squared / (2 * sigma**2))
+    return potential
+
+
 def potential_grid(
     initial_x: float,
     final_t: float,
@@ -79,6 +90,20 @@ def potential_grid(
     f.close()
 
     return x1, y1, potential_grid_values
+
+
+# TODO: move to energy.py
+def compute_energy(x_comparaison: torch.Tensor, y_comparaison: torch.Tensor, px_comparaison: torch.Tensor, py_comparaison: torch.Tensor, alpha_: float, sigma: float):
+    """Compute the energy of the system."""
+    h_curr_comparaison = (px_comparaison**2 + py_comparaison**2) / 2
+    for mu_x, mu_y in means_of_gaussian:
+
+        # Updating the energy
+        h_curr_comparaison += -alpha_ * torch.exp(
+            -(1 / (2 * sigma**2))
+            * ((x_comparaison - mu_x) ** 2 + (y_comparaison - mu_y) ** 2)
+        )
+    return h_curr_comparaison
 
 
 def plot_all(
@@ -318,18 +343,8 @@ def plot_all(
         )
         ax[4].set_title("Energy")
 
-        H_curr_comparaison = (px_comparaison**2 + py_comparaison**2) / 2
-        for m in range(len(means_of_gaussian)):
-            # Get the current means_of_gaussian
-            mu_x = means_of_gaussian[m][0]
-            mu_y = means_of_gaussian[m][1]
-
-            # Updating the energy
-            H_curr_comparaison += -alpha_ * torch.exp(
-                -(1 / (2 * sigma**2))
-                * ((x_comparaison - mu_x) ** 2 + (y_comparaison - mu_y) ** 2)
-            )
-        ax[4].plot(t_comparaison.cpu().detach(), H_curr_comparaison.cpu().detach())
+        h_curr_comparaison = compute_energy(x_comparaison, y_comparaison, px_comparaison, py_comparaison, alpha_, sigma)
+        ax[4].plot(t_comparaison.cpu().detach(), h_curr_comparaison.cpu().detach())
 
     x1, y1, potential_grid_values = potential_grid(
         initial_x, final_t, alpha_, means_of_gaussian, sigma
@@ -456,6 +471,7 @@ def plot_all_tl(
             width_base,
             number_of_epochs,
             grid_size,
+            tl="_tl"
         )
         #################################################################
 
@@ -600,18 +616,8 @@ def plot_all_tl(
         )
         ax[2].set_title("Energy (TL)")
 
-        H_curr_comparaison_tl = (px_comparaison_tl**2 + py_comparaison_tl**2) / 2
-        for m in range(len(means_of_gaussian)):
-            # Get the current means_of_gaussian
-            mu_x = means_of_gaussian[m][0]
-            mu_y = means_of_gaussian[m][1]
-
-            # Updating the energy
-            H_curr_comparaison_tl += -alpha_ * torch.exp(
-                -(1 / (2 * sigma**2))
-                * ((x_comparaison_tl - mu_x) ** 2 + (y_comparaison_tl - mu_y) ** 2)
-            )
-        ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_tl.cpu().detach())
+        h_curr_comparaison_tl = compute_energy(x_comparaison_tl, y_comparaison_tl, px_comparaison_tl, py_comparaison_tl, alpha_, sigma)
+        ax[2].plot(t_comparaison.cpu().detach(), h_curr_comparaison_tl.cpu().detach())
 
     print("For TL, we had {} head".format(number_of_heads))
     x1, y1, potential_grid_values = potential_grid(
@@ -708,85 +714,83 @@ def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
 def save_files(
     loss_head,
     head,
-    m,
+    m: int,
     initial_x: float,
     final_t: float,
-    alpha_,
+    alpha_: float,
     width_base: int,
     number_of_epochs: int,
     grid_size: int,
-    tl="",
+    tl: str = "",
 ) -> None:
-    """
-
+    """Save loss and trajectory data to pickle files.
+    
     Args:
-        loss_head:
-        head:
-        m:
-        initial_x:
-            inital value for x(0)
-        final_t:
-            final time
-        alpha_:
-            constant to scale the potential
-        width_base:
-            the width of the base network
-            shared by all layers in the base
-        grid_size:
-            the number of random points (time) used in training
-
-
+        loss_head: 
+            Loss values for this head
+        head: 
+            Neural network head outputs
+        m: 
+            Head index
+        initial_x: 
+            Initial x position
+        final_t: 
+            Final time
+        alpha_: 
+            Potential strength
+        width_base: 
+            Base network width
+        number_of_epochs: 
+            Number of training epochs
+        grid_size: 
+            Grid size for training points
+        tl: 
+            Transfer learning suffix (default: "")
     """
-    # Saving the individual losses
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}loss_individual{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(loss_head, f)
-    f.close()
-
-    # Saving the trajectories (x)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_Trajectory_NN_x{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 0], f)
-    f.close()
-    # Saving the trajectories (y)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_y{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 1], f)
-    f.close()
-    # Saving the trajectories (px)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_px{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 2], f)
-    f.close()
-    # Saving the trajectories (py)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_py{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 3], f)
-    f.close()
+    base_filename = (
+        f"Data/Head_{m}_Initial_x_{initial_x}_final_t_{final_t}_"
+        f"alpha_{alpha_}_width_base_{width_base}_number_of_epochs{number_of_epochs}_"
+        f"grid_size_{grid_size}"
+    )
+    # Save loss
+    with open(f"{base_filename}loss_individual{tl}.p", "wb") as f:
+        pickle.dump(loss_head, f)
+    # Save trajectories
+    components = {
+        'x': 0,
+        'y': 1,
+        'px': 2,
+        'py': 3
+    }
+    for component, idx in components.items():
+        with open(f"{base_filename}_Trajectory_NN_{component}{tl}.p", "wb") as f:
+            pickle.dump(head.cpu().detach()[:, idx], f)
 
 
-def save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl=""):
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_x{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(x, f)
-    f.close()
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_y{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(y, f)
-    f.close()
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_px{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(px, f)
-    f.close()
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_py{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(py, f)
-    f.close()
+def save_file_numerical(x: np.ndarray, y: np.ndarray, px: np.ndarray, py: np.ndarray, initial_x: float, final_t: float, alpha_: float, tl: str = ""):
+    """Save numerical trajectories to pickle files.
+    
+    Args:
+        x, y, px, py: 
+            Trajectory components
+        initial_x: 
+            Initial x position
+        final_t: 
+            Final time
+        alpha_: 
+            Potential strength
+        tl: 
+            Transfer learning suffix (default: "")
+    """
+    # Dictionary mapping variable names to their values
+    trajectories = {
+        'x': x,
+        'y': y,
+        'px': px,
+        'py': py
+    }
+    base_filename = f"Data/Initial_x_{initial_x}_final_t_{final_t}_alpha_{alpha_}"
+    for var_name, data in trajectories.items():
+        filename = f"{base_filename}_numerical_trajectories_{var_name}{tl}.p"
+        with open(filename, "wb") as f:
+            pickle.dump(data, f)

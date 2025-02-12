@@ -2,6 +2,10 @@
 
 Here, we train the whole network (base and heads).
 This is the initial phase, to train the base to be generalizable.
+
+Saves the loss to Data/loss.p
+Saves the network to Data/network_state.pth
+Saves the initial conditions to Data/Initial_conditions.p
 """
 
 # Imports
