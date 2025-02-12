@@ -25,6 +25,7 @@ def ray_tracing_system(
     sigma: float = 0.1,
     alpha_: float = 0.1,
 ) -> List[float]:
+
     """Returns the derivatives of the system.
 
     We have the derivatives of:
