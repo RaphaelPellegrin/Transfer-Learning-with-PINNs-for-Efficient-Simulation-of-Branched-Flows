@@ -46,10 +46,7 @@ def get_current_energy(
     initial_energy: float = 1 / 2
     current_energy: float = (px**2 + py**2) / 2
 
-    for i in range(len(means_of_gaussian)):
-        # Get the current means_of_gaussian
-        mu_x = means_of_gaussian[i][0]
-        mu_y = means_of_gaussian[i][1]
+    for mu_x, mu_y in means_of_gaussian:
 
         # Building the potential and updating the partial derivatives
         potential = -alpha_ * torch.exp(

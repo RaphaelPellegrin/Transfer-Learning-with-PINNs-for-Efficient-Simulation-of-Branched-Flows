@@ -14,6 +14,9 @@ from pinns.neural_network_architecture import NeuralNetwork
 from pinns.numerical_integrators import numerical_integrator
 from pinns.params import means_of_gaussian
 from pinns.reparametrize import reparametrize, unpack
+from pinns.saving_functions import save_file_numerical, save_files
+from pinns.mse import compute_mse, compute_mse_
+from pinns.potential import potential_grid
 
 line_w: int = 3
 line_box_w: int = 2
@@ -21,64 +24,18 @@ font: dict = {"size": 24}
 plt.rc("font", **font)
 
 
-def potential_grid(
-    initial_x: float,
-    final_t: float,
-    alpha_: float,
-    means_of_gaussian: list = means_of_gaussian,
-    sigma: float = 0.1,
-) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
-    """Makes a grid with the potential value.
+# TODO: move to energy.py
+def compute_energy(x_comparaison: torch.Tensor, y_comparaison: torch.Tensor, px_comparaison: torch.Tensor, py_comparaison: torch.Tensor, alpha_: float, sigma: float):
+    """Compute the energy of the system."""
+    h_curr_comparaison = (px_comparaison**2 + py_comparaison**2) / 2
+    for mu_x, mu_y in means_of_gaussian:
 
-    Args:
-        initial_x:
-            Initial value for x
-        final_t:
-            final time t
-        alpha_:
-            constant to scale the potential
-        means_of_gaussian:
-            means of the Gaussians used in making the potential
-        sigma:
-            used when constructing the potential. Std of the Gaussian (shared)
-
-
-    """
-    x1: np.ndarray = np.linspace(-0.1, 1.1, 500)
-    y1: np.ndarray = np.linspace(-0.1, 1.1, 500)
-    x: np.ndarray
-    y: np.ndarray
-    x, y = np.meshgrid(x1, y1)
-
-    # Saving the means_of_gaussian passed in
-    filename: str = "Data/Means.p"
-    f = open(filename, "wb")
-    pickle.dump(means_of_gaussian, f)
-    f.close()
-
-    # Saving the mesh grid
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid.p"
-    f = open(filename, "wb")
-    pickle.dump(x, f)
-    pickle.dump(y, f)
-    f.close()
-
-    potential_grid_values = 0
-
-    for i in means_of_gaussian:
-        mu_x1 = i[0]
-        mu_y1 = i[1]
-        potential_grid_values += -alpha_ * np.exp(
-            -(((x - mu_x1) ** 2 + (y - mu_y1) ** 2) / sigma**2) / 2
+        # Updating the energy
+        h_curr_comparaison += -alpha_ * torch.exp(
+            -(1 / (2 * sigma**2))
+            * ((x_comparaison - mu_x) ** 2 + (y_comparaison - mu_y) ** 2)
         )
-
-    # Saving the values of potential_grid_values on the grid
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_grid_potential_values.p"
-    f = open(filename, "wb")
-    pickle.dump(potential_grid_values, f)
-    f.close()
-
-    return x1, y1, potential_grid_values
+    return h_curr_comparaison
 
 
 def plot_all(
@@ -318,18 +275,8 @@ def plot_all(
         )
         ax[4].set_title("Energy")
 
-        H_curr_comparaison = (px_comparaison**2 + py_comparaison**2) / 2
-        for m in range(len(means_of_gaussian)):
-            # Get the current means_of_gaussian
-            mu_x = means_of_gaussian[m][0]
-            mu_y = means_of_gaussian[m][1]
-
-            # Updating the energy
-            H_curr_comparaison += -alpha_ * torch.exp(
-                -(1 / (2 * sigma**2))
-                * ((x_comparaison - mu_x) ** 2 + (y_comparaison - mu_y) ** 2)
-            )
-        ax[4].plot(t_comparaison.cpu().detach(), H_curr_comparaison.cpu().detach())
+        h_curr_comparaison = compute_energy(x_comparaison, y_comparaison, px_comparaison, py_comparaison, alpha_, sigma)
+        ax[4].plot(t_comparaison.cpu().detach(), h_curr_comparaison.cpu().detach())
 
     x1, y1, potential_grid_values = potential_grid(
         initial_x, final_t, alpha_, means_of_gaussian, sigma
@@ -456,6 +403,7 @@ def plot_all_tl(
             width_base,
             number_of_epochs,
             grid_size,
+            tl="_tl"
         )
         #################################################################
 
@@ -600,18 +548,8 @@ def plot_all_tl(
         )
         ax[2].set_title("Energy (TL)")
 
-        H_curr_comparaison_tl = (px_comparaison_tl**2 + py_comparaison_tl**2) / 2
-        for m in range(len(means_of_gaussian)):
-            # Get the current means_of_gaussian
-            mu_x = means_of_gaussian[m][0]
-            mu_y = means_of_gaussian[m][1]
-
-            # Updating the energy
-            H_curr_comparaison_tl += -alpha_ * torch.exp(
-                -(1 / (2 * sigma**2))
-                * ((x_comparaison_tl - mu_x) ** 2 + (y_comparaison_tl - mu_y) ** 2)
-            )
-        ax[2].plot(t_comparaison.cpu().detach(), H_curr_comparaison_tl.cpu().detach())
+        h_curr_comparaison_tl = compute_energy(x_comparaison_tl, y_comparaison_tl, px_comparaison_tl, py_comparaison_tl, alpha_, sigma)
+        ax[2].plot(t_comparaison.cpu().detach(), h_curr_comparaison_tl.cpu().detach())
 
     print("For TL, we had {} head".format(number_of_heads))
     x1, y1, potential_grid_values = potential_grid(
@@ -623,170 +561,3 @@ def plot_all_tl(
 
     filename_fig = f"TL/Initial_x_{str(initial_x)}_Initial_y_{str(initial_y)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_TRAJECTORIES_tl.png"
     plt.savefig(filename_fig)
-
-
-def compute_mse_(
-    trajectoires_xy,
-    x: torch.Tensor,
-    y: torch.Tensor,
-    px: torch.Tensor,
-    py: torch.Tensor,
-    Nt,
-) -> float:
-    """Returns the Mean Square Error (MSE).
-
-    MSE between the numerical solution and the NN solution.
-
-    Args:
-        trajectoires_xy:
-            trajectoires xy
-        x:
-            x
-        y:
-            y
-        px:
-            px
-        py:
-            py
-        Nt:
-            Nt
-
-    """
-    # mse:
-    mse = ((trajectoires_xy.cpu().detach()[:, 0] - x) ** 2).mean() + (
-        (trajectoires_xy.cpu().detach()[:, 1] - y) ** 2
-    ).mean()
-    mse += ((trajectoires_xy.cpu().detach()[:, 2] - px) ** 2).mean() + (
-        (trajectoires_xy.cpu().detach()[:, 3] - py) ** 2
-    ).mean()
-    mse = mse / (4 * Nt)
-    return mse
-
-
-# MSE
-def compute_mse(x_, y_, px_, py_, x, y, px, py, Nt) -> float:
-    """Computes the Mean Square Error (MSE).
-
-    MSE between the numerical solution and the NN solution.
-
-    Args:
-        x_:
-            x_
-        y_:
-            y_
-        px_:
-            px_
-        py_:
-            py_
-        x:
-            x
-        y:
-            y
-        px:
-            px
-        py:
-            py
-        Nt:
-            Nt
-    """
-    # mse:
-    mse = ((x_.cpu().detach().reshape((-1, 1)) - x.reshape((-1, 1))) ** 2).mean() + (
-        (y_.cpu().detach().reshape((-1, 1)) - y.reshape((-1, 1))) ** 2
-    ).mean()
-    mse += ((px_.cpu().detach().reshape((-1, 1)) - px.reshape((-1, 1))) ** 2).mean() + (
-        (py_.cpu().detach().reshape((-1, 1)) - py.reshape((-1, 1))) ** 2
-    ).mean()
-    mse = mse / (4 * Nt)
-    return mse
-
-
-################################################################################
-################################## Saving functions ############################
-################################################################################
-
-
-def save_files(
-    loss_head,
-    head,
-    m,
-    initial_x: float,
-    final_t: float,
-    alpha_,
-    width_base: int,
-    number_of_epochs: int,
-    grid_size: int,
-    tl="",
-) -> None:
-    """
-
-    Args:
-        loss_head:
-        head:
-        m:
-        initial_x:
-            inital value for x(0)
-        final_t:
-            final time
-        alpha_:
-            constant to scale the potential
-        width_base:
-            the width of the base network
-            shared by all layers in the base
-        grid_size:
-            the number of random points (time) used in training
-
-
-    """
-    # Saving the individual losses
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}loss_individual{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(loss_head, f)
-    f.close()
-
-    # Saving the trajectories (x)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}_Trajectory_NN_x{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 0], f)
-    f.close()
-    # Saving the trajectories (y)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_y{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 1], f)
-    f.close()
-    # Saving the trajectories (px)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_px{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 2], f)
-    f.close()
-    # Saving the trajectories (py)
-    filename = f"Data/Head_{str(m)}_Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_width_base_{str(width_base)}_number_of_epochs{str(number_of_epochs)}_grid_size_{str(grid_size)}Trajectory_NN_py{tl}.p"
-    # os.mkdir(filename)
-    f = open(filename, "wb")
-    pickle.dump(head.cpu().detach()[:, 3], f)
-    f.close()
-
-
-def save_file_numerical(x, y, px, py, initial_x, final_t, alpha_, tl=""):
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_x{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(x, f)
-    f.close()
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_y{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(y, f)
-    f.close()
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_px{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(px, f)
-    f.close()
-    # Saving the (numerical trajectories)
-    filename = f"Data/Initial_x_{str(initial_x)}_final_t_{str(final_t)}_alpha_{str(alpha_)}_numerical_trajectories_py{tl}.p"
-    f = open(filename, "wb")
-    pickle.dump(py, f)
-    f.close()

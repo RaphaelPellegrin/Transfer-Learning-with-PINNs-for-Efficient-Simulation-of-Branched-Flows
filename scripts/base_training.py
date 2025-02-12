@@ -2,6 +2,10 @@
 
 Here, we train the whole network (base and heads).
 This is the initial phase, to train the base to be generalizable.
+
+Saves the loss to Data/loss.p
+Saves the network to Data/network_state.pth
+Saves the initial conditions to Data/Initial_conditions.p
 """
 
 # Imports
@@ -374,7 +378,7 @@ def initial_full_network_training(
 # @click.option("ft", "final_time", default=1, help="Final time")
 # @click.option("wba", "width_base", default=40, help="Width of the base")
 def main(
-    number_of_epochs: int = 100,
+    number_of_epochs: int = 10,
     number_of_heads: int = 11,
     final_time: float = 1,
     width_base: int = 40,

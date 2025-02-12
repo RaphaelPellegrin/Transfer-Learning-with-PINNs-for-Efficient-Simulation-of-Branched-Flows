@@ -14,15 +14,18 @@ Given by the Hamiltonian: H(x,p) = (1/2)*||p||^2 +V(x)
 
 import numpy as np
 from scipy.integrate import odeint
+from typing import List, Tuple, Any
 
 
 # Use below in the Scipy Solver
 def ray_tracing_system(
-    u: tuple[float, float, float, float],
-    means_gaussian: list,
+    u: List[float],
+    t: float,  # Required by odeint but unused
+    means_gaussian: List[Tuple[float, float]],
     sigma: float = 0.1,
     alpha_: float = 0.1,
-) -> list[float]:
+) -> List[float]:
+
     """Returns the derivatives of the system.
 
     We have the derivatives of:
@@ -41,6 +44,8 @@ def ray_tracing_system(
         alpha_:
             used in potential construction. Scale for the potential
 
+    Returns:
+        List of derivatives [dx/dt, dy/dt, dpx/dt, dpy/dt]
     """
     x: float 
     y: float
@@ -53,9 +58,7 @@ def ray_tracing_system(
     vx: float = 0
     vy: float = 0
 
-    for i in means_gaussian:
-        mu_x = i[0]
-        mu_y = i[1]
+    for mu_x, mu_y in means_gaussian:
         V += -alpha_ * np.exp(-(((x - mu_x) ** 2 + (y - mu_y) ** 2) / sigma**2) / 2)
         vx += (
             alpha_
@@ -83,10 +86,10 @@ def numerical_integrator(
     y0: float,
     px0: float,
     py0: float,
-    means_gaussian: list,
+    means_gaussian: List[Tuple[float, float]],
     sigma: float = 0.1,
     alpha_: float = 0.1,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Returns the solution to the branched flow system.
 
     The solution are obtained numerically here.
@@ -108,6 +111,8 @@ def numerical_integrator(
         alpha_:
             used in potential construction. Scale for the potential
 
+    Returns:
+        Tuple of (x, y, px, py) arrays over time
     """
     u0: list[float, float, float, float] = [x0, y0, px0, py0]
     # Call the ODE solver
@@ -115,11 +120,7 @@ def numerical_integrator(
         ray_tracing_system,
         u0,
         t,
-        args=(
-            means_gaussian,
-            sigma,
-            alpha_,
-        ),
+        args=(means_gaussian, sigma, alpha_)  # Pack additional args as tuple
     )
     xp: np.ndarray = solution[:, 0]
     yp: np.ndarray = solution[:, 1]
