@@ -12,9 +12,10 @@ dpy/dt= - ðv/ðy
 Given by the Hamiltonian: H(x,p) = (1/2)*||p||^2 +V(x)
 """
 
+from typing import List, Tuple
+
 import numpy as np
 from scipy.integrate import odeint
-from typing import List, Tuple, Any
 
 
 # Use below in the Scipy Solver
@@ -47,7 +48,7 @@ def ray_tracing_system(
     Returns:
         List of derivatives [dx/dt, dy/dt, dpx/dt, dpy/dt]
     """
-    x: float 
+    x: float
     y: float
     px: float
     py: float
@@ -120,7 +121,7 @@ def numerical_integrator(
         ray_tracing_system,
         u0,
         t,
-        args=(means_gaussian, sigma, alpha_)  # Pack additional args as tuple
+        args=(means_gaussian, sigma, alpha_),  # Pack additional args as tuple
     )
     xp: np.ndarray = solution[:, 0]
     yp: np.ndarray = solution[:, 1]

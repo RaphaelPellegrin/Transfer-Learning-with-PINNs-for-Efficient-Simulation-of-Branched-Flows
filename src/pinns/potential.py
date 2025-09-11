@@ -1,16 +1,20 @@
 """Module for computing the potential."""
 
-import numpy as np
 import pickle
+
+import numpy as np
+
 from pinns.params import means_of_gaussian
 
 
 # TODO: this is replacing part of the code below.
-def calculate_potential(x: np.ndarray, y: np.ndarray, alpha_: float, sigma: float) -> np.ndarray:
+def calculate_potential(
+    x: np.ndarray, y: np.ndarray, alpha_: float, sigma: float
+) -> np.ndarray:
     """Calculate potential field."""
     potential = np.zeros_like(x)
     for mu_x, mu_y in means_of_gaussian:
-        r_squared = (x - mu_x)**2 + (y - mu_y)**2
+        r_squared = (x - mu_x) ** 2 + (y - mu_y) ** 2
         potential += -alpha_ * np.exp(-r_squared / (2 * sigma**2))
     return potential
 

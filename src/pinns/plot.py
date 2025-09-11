@@ -4,19 +4,18 @@ THe plotting function below plots:
 the energy, the losses, the trajectories
 """
 
-import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+from pinns.mse import compute_mse, compute_mse_
 from pinns.neural_network_architecture import NeuralNetwork
 from pinns.numerical_integrators import numerical_integrator
 from pinns.params import means_of_gaussian
+from pinns.potential import potential_grid
 from pinns.reparametrize import reparametrize, unpack
 from pinns.saving_functions import save_file_numerical, save_files
-from pinns.mse import compute_mse, compute_mse_
-from pinns.potential import potential_grid
 
 line_w: int = 3
 line_box_w: int = 2
@@ -25,7 +24,14 @@ plt.rc("font", **font)
 
 
 # TODO: move to energy.py
-def compute_energy(x_comparaison: torch.Tensor, y_comparaison: torch.Tensor, px_comparaison: torch.Tensor, py_comparaison: torch.Tensor, alpha_: float, sigma: float):
+def compute_energy(
+    x_comparaison: torch.Tensor,
+    y_comparaison: torch.Tensor,
+    px_comparaison: torch.Tensor,
+    py_comparaison: torch.Tensor,
+    alpha_: float,
+    sigma: float,
+):
     """Compute the energy of the system."""
     h_curr_comparaison = (px_comparaison**2 + py_comparaison**2) / 2
     for mu_x, mu_y in means_of_gaussian:
@@ -275,7 +281,9 @@ def plot_all(
         )
         ax[4].set_title("Energy")
 
-        h_curr_comparaison = compute_energy(x_comparaison, y_comparaison, px_comparaison, py_comparaison, alpha_, sigma)
+        h_curr_comparaison = compute_energy(
+            x_comparaison, y_comparaison, px_comparaison, py_comparaison, alpha_, sigma
+        )
         ax[4].plot(t_comparaison.cpu().detach(), h_curr_comparaison.cpu().detach())
 
     x1, y1, potential_grid_values = potential_grid(
@@ -403,7 +411,7 @@ def plot_all_tl(
             width_base,
             number_of_epochs,
             grid_size,
-            tl="_tl"
+            tl="_tl",
         )
         #################################################################
 
@@ -548,7 +556,14 @@ def plot_all_tl(
         )
         ax[2].set_title("Energy (TL)")
 
-        h_curr_comparaison_tl = compute_energy(x_comparaison_tl, y_comparaison_tl, px_comparaison_tl, py_comparaison_tl, alpha_, sigma)
+        h_curr_comparaison_tl = compute_energy(
+            x_comparaison_tl,
+            y_comparaison_tl,
+            px_comparaison_tl,
+            py_comparaison_tl,
+            alpha_,
+            sigma,
+        )
         ax[2].plot(t_comparaison.cpu().detach(), h_curr_comparaison_tl.cpu().detach())
 
     print("For TL, we had {} head".format(number_of_heads))
