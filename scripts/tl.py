@@ -32,7 +32,7 @@ from pinns.ad import diff
 from pinns.energy import get_current_energy
 from pinns.neural_network_architecture import NeuralNetwork
 from pinns.params import means_of_gaussian
-from pinns.plot import plot_all_tl
+from pinns.plot import ensure_directory_exists, plot_all_tl
 from pinns.reparametrize import reparametrize, unpack
 
 # Tell it to use GPU
@@ -455,7 +455,7 @@ def perform_transfer_learning(
 
 
 def main(
-    number_of_epochs: int = 50000,  # this last parameter is important as it dictates which "pre-trained" base model we use
+    number_of_epochs: int = 3000,  # this last parameter is important as it dictates which "pre-trained" base model we use
     number_of_heads: int = 11,
     number_of_heads_tl: int = 1,
     final_time: float = 1,
@@ -467,7 +467,7 @@ def main(
     grid_size=400,
     sigma=0.1,
     parametrisation=True,
-    num_epochs_tl=25000,
+    num_epochs_tl=10500,
 ) -> None:
     """Does TL
 
@@ -476,6 +476,8 @@ def main(
 
 
     """
+    ensure_directory_exists("TL")  # Create TL directory if it doesn't exist
+    ensure_directory_exists("Data")  # Create Data directory if it doesn't exist
 
     filename_saved = f"Data/Initial_x_0_final_t_1_alpha_0.1_width_base_40_number_of_epochs{number_of_epochs}_grid_size_400_network_state.pth"
     network_base = NeuralNetwork(
