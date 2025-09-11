@@ -4,6 +4,7 @@ THe plotting function below plots:
 the energy, the losses, the trajectories
 """
 
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,13 +17,21 @@ from pinns.params import means_of_gaussian
 from pinns.potential import potential_grid
 from pinns.reparametrize import reparametrize, unpack
 from pinns.saving_functions import save_file_numerical, save_files
-from pinns.mse import compute_mse, compute_mse_
-from pinns.potential import potential_grid
 
 line_w: int = 3
 line_box_w: int = 2
 font: dict = {"size": 24}
 plt.rc("font", **font)
+
+
+def ensure_directory_exists(directory_path: str) -> None:
+    """Create directory if it doesn't exist.
+
+    Args:
+        directory_path: Path to the directory to create
+    """
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
 
 
 # TODO: move to energy.py
@@ -414,7 +423,6 @@ def plot_all_tl(
             number_of_epochs,
             grid_size,
             tl="_tl",
-
         )
         #################################################################
 

@@ -455,7 +455,7 @@ def perform_transfer_learning(
 
 
 def main(
-    number_of_epochs: int = 100,  # this last parameter is important as it dictates which "pre-trained" base model we use
+    number_of_epochs: int = 3000,  # this last parameter is important as it dictates which "pre-trained" base model we use
     number_of_heads: int = 11,
     number_of_heads_tl: int = 1,
     final_time: float = 1,
@@ -467,7 +467,7 @@ def main(
     grid_size=400,
     sigma=0.1,
     parametrisation=True,
-    num_epochs_tl=2500,
+    num_epochs_tl=10500,
 ) -> None:
     """Does TL
 

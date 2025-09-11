@@ -16,7 +16,6 @@ from typing import List, Tuple
 
 import numpy as np
 from scipy.integrate import odeint
-from typing import List, Tuple, Any
 
 
 # Use below in the Scipy Solver
@@ -27,7 +26,6 @@ def ray_tracing_system(
     sigma: float = 0.1,
     alpha_: float = 0.1,
 ) -> List[float]:
-
     """Returns the derivatives of the system.
 
     We have the derivatives of:
