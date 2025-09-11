@@ -1,5 +1,4 @@
 import pickle
-
 import numpy as np
 
 ################################################################################
@@ -52,38 +51,39 @@ def save_files(
     with open(f"{base_filename}loss_individual{tl}.p", "wb") as f:
         pickle.dump(loss_head, f)
     # Save trajectories
-    components = {"x": 0, "y": 1, "px": 2, "py": 3}
+    components = {
+        'x': 0,
+        'y': 1,
+        'px': 2,
+        'py': 3
+    }
     for component, idx in components.items():
         with open(f"{base_filename}_Trajectory_NN_{component}{tl}.p", "wb") as f:
             pickle.dump(head.cpu().detach()[:, idx], f)
 
 
-def save_file_numerical(
-    x: np.ndarray,
-    y: np.ndarray,
-    px: np.ndarray,
-    py: np.ndarray,
-    initial_x: float,
-    final_t: float,
-    alpha_: float,
-    tl: str = "",
-):
+def save_file_numerical(x: np.ndarray, y: np.ndarray, px: np.ndarray, py: np.ndarray, initial_x: float, final_t: float, alpha_: float, tl: str = ""):
     """Save numerical trajectories to pickle files.
-
+    
     Args:
-        x, y, px, py:
+        x, y, px, py: 
             Trajectory components
-        initial_x:
+        initial_x: 
             Initial x position
-        final_t:
+        final_t: 
             Final time
-        alpha_:
+        alpha_: 
             Potential strength
-        tl:
+        tl: 
             Transfer learning suffix (default: "")
     """
     # Dictionary mapping variable names to their values
-    trajectories = {"x": x, "y": y, "px": px, "py": py}
+    trajectories = {
+        'x': x,
+        'y': y,
+        'px': px,
+        'py': py
+    }
     base_filename = f"Data/Initial_x_{initial_x}_final_t_{final_t}_alpha_{alpha_}"
     for var_name, data in trajectories.items():
         filename = f"{base_filename}_numerical_trajectories_{var_name}{tl}.p"

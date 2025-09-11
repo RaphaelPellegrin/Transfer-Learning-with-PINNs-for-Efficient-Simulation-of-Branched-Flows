@@ -16,6 +16,7 @@ from typing import List, Tuple
 
 import numpy as np
 from scipy.integrate import odeint
+from typing import List, Tuple, Any
 
 
 # Use below in the Scipy Solver

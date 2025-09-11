@@ -16,6 +16,8 @@ from pinns.params import means_of_gaussian
 from pinns.potential import potential_grid
 from pinns.reparametrize import reparametrize, unpack
 from pinns.saving_functions import save_file_numerical, save_files
+from pinns.mse import compute_mse, compute_mse_
+from pinns.potential import potential_grid
 
 line_w: int = 3
 line_box_w: int = 2
@@ -412,6 +414,7 @@ def plot_all_tl(
             number_of_epochs,
             grid_size,
             tl="_tl",
+
         )
         #################################################################
 
